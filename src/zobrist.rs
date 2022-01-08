@@ -6,7 +6,7 @@ use crate::rng;
 pub type Key = u64;
 pub const KEY_ZERO: Key = 0u64; 
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Zobrist {
     pub psq: [[Key; SQUARE_NB]; PIECE_NB],
     pub en_passant: [Key; FILE_NB],
