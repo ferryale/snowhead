@@ -67,18 +67,18 @@ impl StateInfo {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Position {
-    zobrist: Zobrist,
-    board: [Piece; SQUARE_NB],
-    by_color_bb: [Bitboard; COLOR_NB],
-    by_type_bb: [Bitboard; PIECE_TYPE_NB],
-    piece_count: [i32; PIECE_NB],
-    castling_rights_mask: [CastlingRight; SQUARE_NB],
-    castling_rook_square: [Square; CASTLING_RIGHT_NB],
-    castling_path: [Bitboard; CASTLING_RIGHT_NB],
-    game_ply: i32,
-    side_to_move: Color,
-    states: Vec<StateInfo>,
-    chess960: bool,
+    pub zobrist: Zobrist,
+    pub board: [Piece; SQUARE_NB],
+    pub by_color_bb: [Bitboard; COLOR_NB],
+    pub by_type_bb: [Bitboard; PIECE_TYPE_NB],
+    pub piece_count: [i32; PIECE_NB],
+    pub castling_rights_mask: [CastlingRight; SQUARE_NB],
+    pub castling_rook_square: [Square; CASTLING_RIGHT_NB],
+    pub castling_path: [Bitboard; CASTLING_RIGHT_NB],
+    pub game_ply: i32,
+    pub side_to_move: Color,
+    pub states: Vec<StateInfo>,
+    pub chess960: bool,
 }
 
 
@@ -307,16 +307,16 @@ impl Position {
 
     fn put_piece(&mut self, pc: Piece, s: Square) {
         self.board[s] = pc;
-        self.by_type_bb[ALL_PIECES] |= square_bb(s);
-        self.by_type_bb[pc.piece_type()] |= square_bb(s);
-        self.by_color_bb[pc.color()] |= square_bb(s);
+        self.by_type_bb[ALL_PIECES] |= s;
+        self.by_type_bb[pc.piece_type()] |= s;
+        self.by_color_bb[pc.color()] |= s;
         self.piece_count[pc] += 1;
         self.piece_count[Piece::make(pc.color(), ALL_PIECES)] += 1;
     }
 
     fn move_piece(&mut self, from: Square, to: Square) {
         let pc: Piece = self.board[from];
-        let from_to_bb = from.bb() ^ to.bb();
+        let from_to_bb = from.bb() | to.bb();
         self.by_type_bb[ALL_PIECES] ^= from_to_bb;
         self.by_type_bb[pc.piece_type()] ^= from_to_bb;
         self.by_color_bb[pc.color()] ^= from_to_bb;
@@ -326,10 +326,9 @@ impl Position {
 
     fn remove_piece(&mut self, s: Square) {
         let pc: Piece = self.board[s];
-        let s_bb = square_bb(s);
-        self.by_type_bb[ALL_PIECES] ^= s_bb;
-        self.by_type_bb[pc.piece_type()] ^= s_bb;
-        self.by_color_bb[pc.color()] ^= s_bb;
+        self.by_type_bb[ALL_PIECES] ^= s;
+        self.by_type_bb[pc.piece_type()] ^= s;
+        self.by_color_bb[pc.color()] ^= s;
         self.board[s] = NO_PIECE;
         self.piece_count[pc] -= 1;
         self.piece_count[Piece::make(pc.color(), ALL_PIECES)] -= 1;

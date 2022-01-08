@@ -78,12 +78,16 @@ impl Position {
                     debug_assert!(self.piece_on(to) == NO_PIECE);
                     debug_assert!(self.piece_on(capsq) == Piece::make(them, PAWN));
 
-                    self.board[capsq] = NO_PIECE;
+                    //self.board[capsq] = NO_PIECE; Thhis has to be done AFTER the piece is removed: bug catched!
                 }
             } 
 
             // Update board and piece lists
             self.remove_piece(capsq);
+
+            if m.move_type() == EN_PASSANT {
+                self.board[capsq] = NO_PIECE;
+            }
 
             // Update hash
             k ^= self.zobrist.psq[captured][capsq];
@@ -323,7 +327,7 @@ impl Position {
 
     pub fn gives_check(&self, m: Move) -> bool {
 
-        print!("{} {}\n", self.fen(), m.to_string(false));
+        //print!("{} {}\n", self.fen(), m.to_string(false));
         debug_assert!(m.is_ok());
         debug_assert!(self.moved_piece(m).color() == self.side_to_move());
 
