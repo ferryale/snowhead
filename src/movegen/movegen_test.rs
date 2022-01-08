@@ -54,55 +54,192 @@ use super::*;
 // }
 
 
-fn perft(pos: &mut Position, depth: u32, root: bool) -> usize {
+// fn perft(pos: &mut Position, depth: u32, root: bool) -> usize {
+
+//     let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
+
+//     let leaf = depth == 2;
+//     let mut cnt = 0;
+//     let mut nodes = 0;
+
+//     let mut num_moves = generate_legal(&pos, &mut list, 0);
+//     //let prev_pos = pos.clone();
+
+//     for ext_move in list{
+
+//         if ext_move.m == Move::NONE { break; }
+
+
+//         if root && depth <= 1 {
+//             cnt = 1;
+//             nodes += 1;
+//         } else {
+//             pos.do_move(ext_move.m);
+//             if leaf { cnt = generate_legal(&pos, &mut list, 0); }
+//             else { cnt = perft(pos, depth - 1, false) };
+//             nodes += cnt;
+
+//             pos.undo_move(ext_move.m);
+//             //assert_eq!(&prev_pos, pos);
+
+
+//         }
+        
+//         if root {
+//             println!("{}: {}", ext_move.m.to_string(pos.is_chess960()), cnt);
+//         }
+        
+//     }
+//     nodes
+
+// }
+
+    
+#[derive(Debug)]
+struct Stats {
+    pub nodes: u32,
+    pub en_passant: u32,
+    pub castles: u32,
+    pub checks: u32,
+    pub captures: u32,
+}
+
+
+impl Stats {
+    pub fn new() -> Stats {
+        Stats {
+            nodes: 0,
+            en_passant: 0,
+            castles: 0,
+            checks: 0,
+            captures: 0
+        }
+    }
+}   
+
+fn is_capture(pos: &Position, m: Move) -> bool {
+
+    let from = m.from();
+    let to = m.to();
+    let pc = pos.piece_on(from);
+    let captured = if m.move_type() == EN_PASSANT {
+        Piece::make(!pos.side_to_move(), PAWN)
+    } else {
+        pos.piece_on(to)
+    };
+
+    captured != NO_PIECE
+
+} 
+
+fn perft_stats(pos: &mut Position, depth: u32, stats: &mut Stats) {
 
     let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
 
-    let leaf = depth == 2;
-    let mut cnt = 0;
-    let mut nodes = 0;
+    if depth == 0 {
+        return ();
+    }
 
     let mut num_moves = generate_legal(&pos, &mut list, 0);
-    //let prev_pos = pos.clone();
-
+   
     for ext_move in list{
-
+    
         if ext_move.m == Move::NONE { break; }
 
-
-        if root && depth <= 1 {
-            cnt = 1;
-            nodes += 1;
-        } else {
-            pos.do_move(ext_move.m);
-            if leaf { cnt = generate_legal(&pos, &mut list, 0); }
-            else { cnt = perft(pos, depth - 1, false) };
-            nodes += cnt;
-
-            pos.undo_move(ext_move.m);
-            //assert_eq!(&prev_pos, pos);
-
-
+        if depth == 1 {
+            stats.nodes += 1;
+            if pos.gives_check(ext_move.m) { stats.checks += 1; }
+            if is_capture(pos, ext_move.m) { stats.captures += 1};
+            if ext_move.m.move_type() == CASTLING {  stats.castles += 1; } 
+            if ext_move.m.move_type() == EN_PASSANT  { stats.en_passant += 1; }
         }
+
+    
+        pos.do_move(ext_move.m);
+        perft_stats(pos, depth - 1, stats);
+        pos.undo_move(ext_move.m);
+
         
-        if root {
-            println!("{}: {}", ext_move.m.to_string(pos.is_chess960()), cnt);
-        }
         
+
     }
-    nodes
 
 }
 
 #[test]
-fn perft5_startfen() {
-    let depth = 6;
+fn perft4_stats() {
+
+    let mut stats = Stats::new();
+    let depth = 4;
+
     let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     let mut pos = Position::new();
     pos.set(start_fen, false);
-    let nodes = perft(&mut pos, depth, true);
+    perft_stats(&mut pos, depth, &mut stats);
 
-    assert_eq!(nodes, 119_060_324);
+    assert_eq!(stats.nodes, 197_281);
+    assert_eq!(stats.captures, 1_576);
+    assert_eq!(stats.checks, 469);
+        
+
 }
+
+#[test]
+fn perft5_stats() {
+    //5   4,865,609   82,719  258 0   0   27,351  6   0   347
+
+    let mut stats = Stats::new();
+    let depth = 5;
+
+    let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    let mut pos = Position::new();
+    pos.set(start_fen, false);
+    perft_stats(&mut pos, depth, &mut stats);
+
+    assert_eq!(stats.nodes, 4_865_609);
+    assert_eq!(stats.captures, 82_719);
+    assert_eq!(stats.checks, 27_351);
+    assert_eq!(stats.en_passant, 258);
+}
+
+#[test]
+fn perft6_stats() {
+    //119,060,324 2,812,008   5248    0   0   809,099
+
+    let mut stats = Stats::new();
+    let depth = 6;
+
+    let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    let mut pos = Position::new();
+    pos.set(start_fen, false);
+    perft_stats(&mut pos, depth, &mut stats);
+
+    assert_eq!(stats.nodes, 119_060_324);
+    assert_eq!(stats.captures, 2_812_008);
+    assert_eq!(stats.checks, 809_099);
+    assert_eq!(stats.en_passant, 5248);
+}
+
+// #[test]
+// fn perft7_stats() {
+//     //Depth   Nodes   Captures    E.p.    Castles Promotions  Checks  Discovery Checks    Double Checks   Checkmates
+//     //3,195,901,860 108,329,926 319,617 883,453 0   33,103,848  18,026  1628    435,767
+
+//     let mut stats = Stats::new();
+//     let depth = 7;
+
+//     let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//     let mut pos = Position::new();
+//     pos.set(start_fen, false);
+//     perft_stats(&mut pos, depth, &mut stats);
+
+//     assert_eq!(stats.nodes, 3_195_901_860);
+//     assert_eq!(stats.captures, 108_329_926);
+//     assert_eq!(stats.checks, 33_103_848);
+//     assert_eq!(stats.en_passant, 319_617);
+//     assert_eq!(stats.castles, 883_453);
+// }
+
+
     
 

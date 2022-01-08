@@ -110,7 +110,8 @@ fn main() {
     let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     pos.set(start_fen, false);
 
-    let nodes = perft(&mut pos, 6, true);
+    let nodes = perft(&mut pos, 8, true);
+    println!("{:?}", nodes);
 
 }
 
