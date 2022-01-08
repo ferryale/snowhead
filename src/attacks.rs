@@ -1,6 +1,6 @@
 pub mod magics;
-// pub mod attack_tables;
-// pub mod attack_bb;
+pub mod attack_tables;
+pub mod attack_bb;
 
 use crate::types::bitboard::*;
 use crate::types::square::*;
