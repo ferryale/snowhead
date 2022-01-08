@@ -5,10 +5,9 @@ mod square_test;
 use super::piece::{Color, WHITE, BLACK};
 
 
-use super::*;
 //use super::*; // pub(super) use enable_base_operations_for_u32_on;
 //#[macro_use]   
-use super::{enable_base_operations_for_u32_on, enable_indexing_by};
+//use super::{enable_base_operations_for_u32_on, enable_indexing_by};
 
 //enable_base_operations_for_u32_on!(Square);
 // enable_base_operations_for_u32_on!(File);
