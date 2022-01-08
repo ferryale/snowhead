@@ -73,7 +73,7 @@ pub const fn sliding_attacks(pt: PieceType, sq: Square, occupied: Bitboard) -> B
     let directions = match pt {
         ROOK => &ROOK_DIRS,
         BISHOP => &BISHOP_DIRS,
-        _ => panic!("Shit!")
+        _ => panic!("Only rook and bishop allowed in attacks::sliding_attacks()!")
     };
 
     let mut idx: usize = 0;

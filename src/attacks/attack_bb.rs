@@ -1,3 +1,7 @@
+#[cfg(test)]
+//#[macro_use]
+mod attack_bb_test;
+
 use crate::types::bitboard::*;
 use crate::types::square::*;
 use crate::types::piece::*;
