@@ -58,7 +58,7 @@ impl Position {
             let mut rto = Square::NONE;
             self.do_castling::<true>(us, from, &mut to, &mut rfrom, &mut rto);
 
-            self.st_mut().psq.0 += psqt::psq(captured, rto).0 - psqt::psq(captured, rfrom).0;
+            self.st_mut().psq += psqt::psq(captured, rto) - psqt::psq(captured, rfrom);
 
             k ^= self.zobrist.psq[captured][rfrom] ^ self.zobrist.psq[captured][rto];
             captured = NO_PIECE;
@@ -95,7 +95,7 @@ impl Position {
             k ^= self.zobrist.psq[captured][capsq];
 
             // Update incremental scores
-            self.st_mut().psq.0 -= psqt::psq(captured, capsq).0;
+            self.st_mut().psq -= psqt::psq(captured, capsq);
 
             // Reset rule 50 counter
             self.st_mut().rule50 = 0;
@@ -149,8 +149,8 @@ impl Position {
                 k ^= self.zobrist.psq[pc][to] ^ self.zobrist.psq[promotion][to];
 
                 // Update incremental score
-                self.st_mut().psq.0 +=
-                    psqt::psq(promotion, to).0 - psqt::psq(pc, to).0;
+                self.st_mut().psq +=
+                    psqt::psq(promotion, to) - psqt::psq(pc, to);
             }
 
             // Reset rule 50 draw counter
@@ -158,7 +158,7 @@ impl Position {
         }
 
         // Update incremental scores
-        self.st_mut().psq.0 += psqt::psq(pc, to).0 - psqt::psq(pc, from).0;
+        self.st_mut().psq += psqt::psq(pc, to) - psqt::psq(pc, from);
 
         // Set captured piece
         self.st_mut().captured_piece = captured;

@@ -26,19 +26,19 @@ fn main() {
     pos.do_move(m);
     pos.print();
 
-    println!("{:?}", pos.psq_value());
+    println!("{:?}", pos.psq_value().mg());
 
     m = Move::make(Square::C7, Square::C5);
     pos.do_move(m);
     pos.print();
 
-    println!("{:?}", pos.psq_value());
+    println!("{:?}", pos.psq_value().mg());
 
     m = Move::make(Square::D4, Square::C5);
     pos.do_move(m);
     pos.print();
 
-    println!("{:?}", pos.psq_value());
+    println!("{:?}", pos.psq_value().mg());
 
     // let mut m = Move::make(Square::E2, Square::E4);
     // pos.do_move(m);

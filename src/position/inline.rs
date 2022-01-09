@@ -136,7 +136,7 @@ impl Position {
         self.st().key
     }
 
-    pub fn psq_value(&self) -> psqt::Value {
+    pub fn psq_value(&self) -> Score {
         self.st().psq
     }
 
