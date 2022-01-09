@@ -2,12 +2,14 @@ pub mod square;
 pub mod piece;
 pub mod r#move;
 pub mod bitboard;
+pub mod score;
 
 use std::ops;
 use self::square::{Rank, File, Square, Direction};
 use self::piece::{Color, PieceType, Piece};
 use self::r#move::{Move, CastlingRight};
 use self::bitboard::Bitboard;
+use self::score::Value;
 
 macro_rules! enable_base_operations_for_u32_on {
 
@@ -77,6 +79,46 @@ macro_rules! enable_base_operations_for_i32_on {
         impl ops::SubAssign<i32> for $ty {
             fn sub_assign(&mut self, rhs: i32) {
                 *self = *self - rhs;
+            }
+
+        }
+
+    };
+
+}
+
+macro_rules! enable_full_operations_for_i32_on {
+
+    ($ty: ident) => {
+
+        enable_base_operations_for_i32_on!($ty);
+
+        impl ops::Mul<i32> for $ty {
+            type Output = $ty;
+            fn mul(self, rhs: i32) -> Self {
+                $ty(self.0 * rhs)
+            }
+
+        }
+
+        impl ops::MulAssign<i32> for $ty {
+            fn mul_assign(&mut self, rhs: i32) {
+                *self = *self * rhs;
+            }
+
+        }
+
+        impl ops::Div<i32> for $ty {
+            type Output = $ty;
+            fn div(self, rhs: i32) -> Self {
+                $ty(self.0 / rhs)
+            }
+
+        }
+
+        impl ops::DivAssign<i32> for $ty {
+            fn div_assign(&mut self, rhs: i32) {
+                *self = *self / rhs;
             }
 
         }
@@ -198,6 +240,7 @@ enable_base_operations_for_u32_on!(File);
 enable_base_operations_for_u32_on!(Rank);
 enable_base_operations_for_u32_on!(CastlingRight);
 enable_base_operations_for_i32_on!(Direction);
+enable_full_operations_for_i32_on!(Value);
 
 enable_bit_operations_on!(CastlingRight);
 enable_bit_operations_on!(Bitboard);
