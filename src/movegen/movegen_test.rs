@@ -184,41 +184,41 @@ fn perft4_stats() {
 
 }
 
-#[test]
-fn perft5_stats() {
-    //5   4,865,609   82,719  258 0   0   27,351  6   0   347
+// #[test]
+// fn perft5_stats() {
+//     //5   4,865,609   82,719  258 0   0   27,351  6   0   347
 
-    let mut stats = Stats::new();
-    let depth = 5;
+//     let mut stats = Stats::new();
+//     let depth = 5;
 
-    let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    let mut pos = Position::new();
-    pos.set(start_fen, false);
-    perft_stats(&mut pos, depth, &mut stats);
+//     let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//     let mut pos = Position::new();
+//     pos.set(start_fen, false);
+//     perft_stats(&mut pos, depth, &mut stats);
 
-    assert_eq!(stats.nodes, 4_865_609);
-    assert_eq!(stats.captures, 82_719);
-    assert_eq!(stats.checks, 27_351);
-    assert_eq!(stats.en_passant, 258);
-}
+//     assert_eq!(stats.nodes, 4_865_609);
+//     assert_eq!(stats.captures, 82_719);
+//     assert_eq!(stats.checks, 27_351);
+//     assert_eq!(stats.en_passant, 258);
+// }
 
-#[test]
-fn perft6_stats() {
-    //119,060,324 2,812,008   5248    0   0   809,099
+// #[test]
+// fn perft6_stats() {
+//     //119,060,324 2,812,008   5248    0   0   809,099
 
-    let mut stats = Stats::new();
-    let depth = 6;
+//     let mut stats = Stats::new();
+//     let depth = 6;
 
-    let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    let mut pos = Position::new();
-    pos.set(start_fen, false);
-    perft_stats(&mut pos, depth, &mut stats);
+//     let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//     let mut pos = Position::new();
+//     pos.set(start_fen, false);
+//     perft_stats(&mut pos, depth, &mut stats);
 
-    assert_eq!(stats.nodes, 119_060_324);
-    assert_eq!(stats.captures, 2_812_008);
-    assert_eq!(stats.checks, 809_099);
-    assert_eq!(stats.en_passant, 5248);
-}
+//     assert_eq!(stats.nodes, 119_060_324);
+//     assert_eq!(stats.captures, 2_812_008);
+//     assert_eq!(stats.checks, 809_099);
+//     assert_eq!(stats.en_passant, 5248);
+// }
 
 // #[test]
 // fn perft7_stats() {
