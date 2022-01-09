@@ -9,6 +9,7 @@ use crate::types::piece::*;
 use crate::types::r#move::*;
 use crate::types::bitboard::*;
 use crate::zobrist::*;
+use crate::psqt;
 //use crate::rng;
 //use self::inline::*;
 
@@ -18,7 +19,7 @@ pub struct StateInfo {
     pub castling_right: CastlingRight,
     pub rule50: i32,
     pub plies_from_null: i32,
-    //pub psq: Score,
+    pub psq: psqt::Value,
     pub ep_square: Square,
 
     // Not copied when making a move (will be recomputed anyhow)
@@ -36,6 +37,7 @@ impl StateInfo {
             castling_right: NO_CASTLING,
             rule50: 0,
             plies_from_null: 0,
+            psq: psqt::Value(0),
             ep_square: Square::NONE,
             key: KEY_ZERO,
             checkers_bb: EMPTY_BB,
@@ -52,7 +54,7 @@ impl StateInfo {
             castling_right: self.castling_right,
             rule50: self.rule50,
             plies_from_null: self.plies_from_null,
-            //psq: self.psq,
+            psq: self.psq,
             ep_square: self.ep_square,
             // Reset
             key: KEY_ZERO,
@@ -159,8 +161,8 @@ impl Position {
     // the correctness of the StateInfo data when running in debug mode.
     fn set_state(&mut self) {
         self.st_mut().key = KEY_ZERO;
-        // TO DO: ADD PSQT
-        // self.st_mut().psq = 0;
+        
+        self.st_mut().psq = psqt::Value(0);
 
         self.st_mut().checkers_bb = self.attackers_to(self.square(self.side_to_move, KING))
             & self.pieces_c(self.opposite_side());
@@ -170,6 +172,7 @@ impl Position {
         for s in self.pieces() {
             let pc: Piece = self.piece_on(s);
             self.st_mut().key ^= self.zobrist.psq[pc][s];
+            self.st_mut().psq.0 += psqt::psq(pc, s).0;
         }
 
         if self.st().ep_square != Square::NONE {

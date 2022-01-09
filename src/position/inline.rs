@@ -136,9 +136,9 @@ impl Position {
         self.st().key
     }
 
-    // pub fn psq_score(&self) -> Score {
-    //     self.st().psq
-    // }
+    pub fn psq_value(&self) -> psqt::Value {
+        self.st().psq
+    }
 
     pub fn game_ply(&self) -> i32 {
         self.game_ply
