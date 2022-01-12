@@ -5,3 +5,4 @@ pub mod attacks;
 pub mod position;
 pub mod movegen;
 pub mod psqt;
+pub mod search;

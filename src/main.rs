@@ -6,6 +6,7 @@ use snowhead::zobrist::*;
 use snowhead::position::*;
 use snowhead::movegen::*;
 use snowhead::psqt::*;
+use snowhead::search::*;
 
 
 fn main() {
@@ -121,10 +122,14 @@ fn main() {
     // // }
 
     //let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    pos.set("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", false);
+    // pos.set("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", false);
 
-    let nodes = perft(&mut pos, 5, true);
-    println!("{:?}", nodes);
+    // let nodes = perft(&mut pos, 5, true);
+    // println!("{:?}", nodes);
+
+    let thread = Thread::new();
+    //println!("{:?}", thread);
+    println!("{}", thread.info())
 
 }
 
