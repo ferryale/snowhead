@@ -29,6 +29,15 @@ pub struct ExtMove {
 
 }
 
+impl ExtMove {
+    pub fn new() -> ExtMove {
+        ExtMove {
+            m: Move::NONE,
+            value: 0
+        }
+    }
+}
+
 // trait GenTypeTrait {}
 // impl GenTypeTrait for GenType {}
 
