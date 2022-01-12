@@ -58,7 +58,6 @@ impl Thread {
         }
 
         ret
-
     }
 
     pub fn seldepth(&self) -> usize {
@@ -116,4 +115,54 @@ impl Thread {
         }
 
     }
+
+    pub fn search(&mut self, pos: &Position, depth: Depth){
+        
+    }
 }
+
+fn update_pv(pv: &mut[Move], m: Move, child_pv: &[Move]){
+    pv[0] = m;
+    let mut idx = 0;
+    while child_pv[idx] != Move::NONE {
+        pv[idx+1] = child_pv[idx];
+        idx += 1;
+    }
+    
+}
+
+pub fn search(pos: &Postion, ply: usize, alpha: Value, beta: Value, depth: i32, thread: &Thread) -> Value {
+
+    thread.ss[ply].node_count += 1;
+    if depth == 0 {
+        pos.score.mg()
+    }
+
+    let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
+
+    let mut num_moves = generate_legal(&pos, &mut list, 0);
+
+    for ext_move in list {
+        m = ext_move.m;
+        if m == Move::NONE { break; }
+
+        pos.do_move(m);
+
+        value -= search(pos, ply+1, -beta, -alpha, depth-1, thread);
+
+        pos.undo_move(m);
+
+        if value >= beta {
+            return beta;
+        }
+        if value > alpha {
+            alpha = value;
+            update_pv(thread.ss[ply].pv, m, thread.ss[ply+1].pv);
+        }
+
+    }
+
+    alpha
+
+}
+
