@@ -1,4 +1,4 @@
 /target
-*.txt
+perft6_test_fail.txt
 *.zip
 *.sublime*
