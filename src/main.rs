@@ -132,7 +132,7 @@ fn main() {
     //println!("{:?}", thread);
     println!("{}", thread.info());
 
-    thread.search(&mut pos, 6);
+    thread.search(&mut pos, 7);
 
     println!("{}", thread.info());
 
