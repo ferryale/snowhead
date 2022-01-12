@@ -7,6 +7,8 @@ use crate::types::score::*;
 use crate::zobrist::*;
 use crate::psqt;
 use crate::movegen::*;
+use crate::position::*;
+use crate::position::inline::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Stack {
@@ -28,7 +30,7 @@ impl Stack {
 
 #[derive(Debug, Clone)]
 pub struct Thread {
-    ss: [Stack; MAX_PLY as usize],
+    pub ss: [Stack; MAX_PLY as usize],
     root_moves: [ExtMove; MAX_MOVES],
 }
 
@@ -50,7 +52,7 @@ impl Thread {
         let mut ret: usize = 0;
 
         for ply in 0..MAX_PLY as usize {
-            if self.ss[ply].pv[0] != Move::NONE {
+            if self.ss[ply].pv[0] == Move::NONE {
                 ret = ply;
                 break;
             }
@@ -69,7 +71,7 @@ impl Thread {
                 break;
             }
         }
-        ret
+        if ret > 0 { ret-1 } else { 0 } 
     }
 
     pub fn nodes(&self) -> u32 {
@@ -116,26 +118,41 @@ impl Thread {
 
     }
 
-    pub fn search(&mut self, pos: &Position, depth: Depth){
-        
+    pub fn search(&mut self, pos: &mut Position, depth: i32) -> Value {
+        let mut alpha = -Value::INFINITE;
+        let mut beta = Value::INFINITE;
+        search(pos, 0, alpha, beta, depth, self)
     }
 }
 
-fn update_pv(pv: &mut[Move], m: Move, child_pv: &[Move]){
-    pv[0] = m;
+// fn update_pv(pv: &mut[Move], m: Move, child_pv: &[Move]){
+//     pv[0] = m;
+//     let mut idx = 0;
+//     while child_pv[idx] != Move::NONE {
+//         pv[idx+1] = child_pv[idx];
+//         idx += 1;
+//     }
+    
+// }
+
+fn update_pv(ss: &mut [Stack], ply: usize, m: Move){
+    ss[ply].pv[0] = m;
     let mut idx = 0;
-    while child_pv[idx] != Move::NONE {
-        pv[idx+1] = child_pv[idx];
+    while ss[ply+1].pv[idx] != Move::NONE {
+        ss[ply].pv[idx+1] = ss[ply+1].pv[idx];
         idx += 1;
     }
     
 }
 
-pub fn search(pos: &Postion, ply: usize, alpha: Value, beta: Value, depth: i32, thread: &Thread) -> Value {
+
+pub fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: i32, thread: &mut Thread) -> Value {
 
     thread.ss[ply].node_count += 1;
     if depth == 0 {
-        pos.score.mg()
+        if pos.side_to_move() == WHITE { return pos.psq_score().mg(); } 
+        else { return -pos.psq_score().mg();}
+        
     }
 
     let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
@@ -143,12 +160,12 @@ pub fn search(pos: &Postion, ply: usize, alpha: Value, beta: Value, depth: i32, 
     let mut num_moves = generate_legal(&pos, &mut list, 0);
 
     for ext_move in list {
-        m = ext_move.m;
+        let m = ext_move.m;
         if m == Move::NONE { break; }
 
         pos.do_move(m);
 
-        value -= search(pos, ply+1, -beta, -alpha, depth-1, thread);
+        let value = -search(pos, ply+1, -beta, -alpha, depth-1, thread);
 
         pos.undo_move(m);
 
@@ -157,7 +174,7 @@ pub fn search(pos: &Postion, ply: usize, alpha: Value, beta: Value, depth: i32, 
         }
         if value > alpha {
             alpha = value;
-            update_pv(thread.ss[ply].pv, m, thread.ss[ply+1].pv);
+            update_pv(&mut thread.ss, ply, m);
         }
 
     }

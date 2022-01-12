@@ -27,19 +27,19 @@ fn main() {
     pos.do_move(m);
     pos.print();
 
-    println!("{:?}", pos.psq_value().mg());
+    println!("{:?}", pos.psq_score().mg());
 
     m = Move::make(Square::C7, Square::C5);
     pos.do_move(m);
     pos.print();
 
-    println!("{:?}", pos.psq_value().mg());
+    println!("{:?}", pos.psq_score().mg());
 
     m = Move::make(Square::D4, Square::C5);
     pos.do_move(m);
     pos.print();
 
-    println!("{:?}", pos.psq_value().mg());
+    println!("{:?}", pos.psq_score().mg());
 
     // let mut m = Move::make(Square::E2, Square::E4);
     // pos.do_move(m);
@@ -121,15 +121,23 @@ fn main() {
 
     // // }
 
-    //let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    let start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    pos.set(start_fen, false);
     // pos.set("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", false);
 
     // let nodes = perft(&mut pos, 5, true);
     // println!("{:?}", nodes);
 
-    let thread = Thread::new();
+    let mut thread = Thread::new();
     //println!("{:?}", thread);
-    println!("{}", thread.info())
+    println!("{}", thread.info());
+
+    thread.search(&mut pos, 6);
+
+    println!("{}", thread.info());
+
+    println!("{:?} {:?} {:?} {:?}", thread.ss[0], thread.ss[1], thread.ss[2], thread.ss[3]);
+
 
 }
 
