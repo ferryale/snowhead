@@ -278,7 +278,7 @@ fn generate_all(us: Color, gen_type: GenType,
 
 }
 
-fn generate(gen_type: GenType, 
+pub fn generate(gen_type: GenType, 
     pos: &Position, list: &mut [ExtMove], idx: usize) -> usize {
 
     debug_assert!(gen_type != LEGAL );
