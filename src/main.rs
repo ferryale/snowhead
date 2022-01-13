@@ -130,13 +130,13 @@ fn main() {
 
     let mut thread = Thread::new();
     //println!("{:?}", thread);
-    println!("{}", thread.info());
+    //println!("{}", thread.info());
 
-    thread.search(&mut pos, 2);
+    thread.search(&mut pos, 4);
 
-    println!("{}", thread.info());
+    //println!("{}", thread.info());
 
-    println!("{:?} {:?} {:?} {:?}", thread.ss[0], thread.ss[1], thread.ss[2], thread.ss[3]);
+    //println!("{:?} {:?} {:?} {:?}", thread.ss[0], thread.ss[1], thread.ss[2], thread.ss[3]);
 
 
 }

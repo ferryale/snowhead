@@ -121,8 +121,20 @@ impl Thread {
 
     pub fn search(&mut self, pos: &mut Position, depth: i32) -> Value {
         let mut alpha = -Value::INFINITE;
-        let mut beta = Value::INFINITE;
-        search(pos, 0, alpha, beta, depth, self)
+        let beta = Value::INFINITE;
+        let mut value = Value::ZERO;
+        let ply = 0;
+        for curr_depth in 1..depth+1 {
+            value = search(pos, 0, alpha, beta, curr_depth, self);
+            println!("{}", self.info());
+            if curr_depth < depth {
+                self.init_stacks();
+            }
+
+        }
+
+        value
+        
     }
 }
 
