@@ -132,11 +132,11 @@ fn main() {
     //println!("{:?}", thread);
     println!("{}", thread.info());
 
-    thread.search(&mut pos, 5);
+    thread.search(&mut pos, 2);
 
     println!("{}", thread.info());
 
-    //println!("{:?} {:?} {:?} {:?}", thread.ss[0], thread.ss[1], thread.ss[2], thread.ss[3]);
+    println!("{:?} {:?} {:?} {:?}", thread.ss[0], thread.ss[1], thread.ss[2], thread.ss[3]);
 
 
 }
