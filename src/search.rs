@@ -8,6 +8,7 @@ use crate::zobrist::*;
 use crate::psqt;
 use crate::movegen::*;
 use crate::position::*;
+use crate::evaluate::*;
 use crate::position::inline::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -149,15 +150,19 @@ fn update_pv(ss: &mut [Stack], ply: usize, m: Move){
 pub fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: i32, thread: &mut Thread) -> Value {
 
     thread.ss[ply].node_count += 1;
+
+    // Checks for 50 rule count and repetition draw. Stalemate is handled later.
+    if pos.is_draw(ply as i32) {
+        return Value::DRAW;
+    }
+
     if depth == 0 {
-        if pos.side_to_move() == WHITE { return pos.psq_score().mg(); } 
-        else { return -pos.psq_score().mg();}
-        
+        return evaluate(pos);
     }
 
     let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
 
-    let mut num_moves = generate_legal(&pos, &mut list, 0);
+    let num_moves = generate_legal(&pos, &mut list, 0);
 
     for ext_move in list {
         let m = ext_move.m;
@@ -176,6 +181,20 @@ pub fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, dep
             alpha = value;
             update_pv(&mut thread.ss, ply, m);
         }
+
+    }
+
+    // If there are no legal moves at this point, it is either checkmate or stalemate
+    if num_moves == 0 {
+        // Stalemate
+        if pos.checkers() == 0 {
+            return Value::DRAW;
+        } else if pos.side_to_move() == WHITE {
+            return mated_in(ply as i32);
+        } else {
+            return mate_in(ply as i32);
+        }
+
 
     }
 
