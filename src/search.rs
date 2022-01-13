@@ -119,7 +119,7 @@ impl Thread {
 
     }
 
-    pub fn search(&mut self, pos: &mut Position, depth: i32) -> Value {
+    pub fn search(&mut self, pos: &mut Position, depth: i32) {
         let mut alpha = -Value::INFINITE;
         let beta = Value::INFINITE;
         let mut value = Value::ZERO;
@@ -132,9 +132,6 @@ impl Thread {
             }
 
         }
-
-        value
-        
     }
 }
 
