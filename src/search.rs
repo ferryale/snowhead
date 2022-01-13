@@ -106,7 +106,7 @@ impl Thread {
 
     pub fn info(&self) -> String {
 
-        format!("depth {} seldepth {} nodes {} pv {}", 
+        format!("depth {} seldepth {} nodes {} pv{}", 
             self.depth(), self.seldepth(), self.nodes(), self.pv_string())
         
     }
@@ -132,6 +132,15 @@ impl Thread {
             }
 
         }
+
+        let mut best_move_str = format!("bestmove {}", self.pv()[0].to_string(false));
+        if depth > 1 {
+            let ponder_str = format!("ponder {}", self.pv()[1].to_string(false));
+            best_move_str = format!("{} {}", best_move_str, ponder_str);
+        }
+
+        println!("{}", best_move_str);
+
     }
 }
 
