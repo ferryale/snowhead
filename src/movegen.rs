@@ -38,13 +38,6 @@ impl ExtMove {
     }
 }
 
-// trait GenTypeTrait {}
-// impl GenTypeTrait for GenType {}
-
-// pub fn gen_moves<DO: bool>(pos: Position){
-//     QUIETS;
-// }
-
 
 fn generate_moves(us: Color, pt: PieceType, checks: bool,
     pos: &Position, list: &mut [ExtMove], mut idx: usize, 
@@ -53,19 +46,10 @@ fn generate_moves(us: Color, pt: PieceType, checks: bool,
     debug_assert!(pt != KING && pt != PAWN);
 
     let bb = pos.pieces_cp(us, pt);
-    // if pt == ROOK {
-    //         println!("{}", pretty(bb));
-    //         println!("{}", pretty(target));
-    //     }
-
-    //println!("{:?}", pt);
 
     for from in bb {
-        //println!("{}", pt.to_char());
+
         let mut b = pos.attacks_from(pt, from) & target;
-        // if pt == ROOK {
-        //     println!("{}", pretty(target));
-        // }
 
         // To check, you either move freely a blocker or make a direct check.
         if checks && (pt == QUEEN || (pos.blockers_for_king(!us) & from) == EMPTY_BB) {
@@ -221,8 +205,6 @@ fn generate_all(us: Color, gen_type: GenType,
     debug_assert!(gen_type != LEGAL );
     let checks = gen_type == QUIET_CHECKS;
 
-    //println!("{}", !more_than_one(pos.checkers()));
-
     let ksq = pos.square(us, KING);
     let target = match gen_type {
             EVASIONS =>      between_bb(ksq, lsb(pos.checkers())),
@@ -241,7 +223,6 @@ fn generate_all(us: Color, gen_type: GenType,
         idx = generate_moves(us, BISHOP, checks, pos, list, idx, target);
         idx = generate_moves(us, ROOK,   checks, pos, list, idx, target);
         idx = generate_moves(us, QUEEN,  checks, pos, list, idx, target); 
-        //println!("{:?}", list[0].m.to_string(false));
     }
 
     if !checks || (pos.blockers_for_king(!us) & ksq) != EMPTY_BB
@@ -255,10 +236,7 @@ fn generate_all(us: Color, gen_type: GenType,
         }
 
         for to in b {
-            //println!("Here {}", gen_type == EVASIONS);
             list[idx].m = Move::make(ksq, to);
-            //println!("{}", list[idx].m.to_string(pos.is_chess960()));
-            //println!("{:?}", list);
             idx += 1;
 
         }
@@ -267,7 +245,6 @@ fn generate_all(us: Color, gen_type: GenType,
             for cr in [castling_right_c(us, KING_SIDE), castling_right_c(us, QUEEN_SIDE)] {
                 if !pos.castling_impeded(cr) && pos.has_castling_right(cr) {
                     list[idx].m = Move::make_special(CASTLING, ksq, pos.castling_rook_square(cr));
-                    //println!("{}", list[idx].m.to_string(pos.is_chess960()));
                     idx += 1;
                 }
             }
@@ -289,7 +266,7 @@ pub fn generate(gen_type: GenType,
 
 }
 
-// generate_legal() generates all the legal moves in the given position
+/// generate_legal() generates all the legal moves in the given position
 pub fn generate_legal(
     pos: &Position, list: &mut [ExtMove], idx: usize
 ) -> usize {
@@ -303,45 +280,22 @@ pub fn generate_legal(
         generate(NON_EVASIONS, pos, list, idx)
     };
 
-    // println!("{:?}", list);
-    // let mut legal = pseudo;
     let mut legal = idx;
     for i in idx..pseudo {
         let m = list[i].m;
         //print!("{} {}\n", pos.fen(), m.to_string(false));
         if (pinned == EMPTY_BB && m.from() != ksq && m.move_type() != EN_PASSANT)
-            || pos.legal(m)
-
-        // if pos.legal(m)
-        {   
-            //print!("{} {}\n", pos.fen(), m.to_string(false));
+            || pos.legal(m) {   
             list[legal].m = m;
             legal += 1;
         }
-        else {
-            //println!("Shit");
-        }
-        // if ( (pinned != 0) && ((pinned & m.from()) != 0)) || m.from() == ksq || m.move_type() == EN_PASSANT 
-        //   && !pos.legal(m)
-        // {
-        //     //println!("Shit");
-        // }
-        // else {
-        //     list[legal].m = m;
-        //     legal += 1;
-        // }
-
+    
 
     }
 
     for i in legal..pseudo+1{
         list[i].m = Move::NONE;
     }
-
-
-
-    //println!("{:?}", list);
-
 
     legal
 }
