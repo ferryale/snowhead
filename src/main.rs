@@ -18,7 +18,35 @@ fn main() {
     // //println!("{:?}", Square::A1);
 
     // let mut pos = Position::new();
-    
+
+    // pos.set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", false);
+
+    // for idx in 0..3 {
+    //     let mut m = Move::make(Square::B1, Square::C3);
+    //     pos.do_move(m);
+    //     // pos.print();
+    //     // //println!("repetition {}", pos.st().repetition);
+
+    //     m = Move::make(Square::B8, Square::C6);
+    //     pos.do_move(m);
+    //     // pos.print();
+    //     // //println!("repetition {}", pos.st().repetition);
+
+    //     m = Move::make(Square::C3, Square::B1);
+    //     pos.do_move(m);
+    //     pos.print();
+    //     //println!("repetition {}", pos.st().repetition);
+    //     println!("repetition {}", pos.st().repetition);
+    //     println!("{} {}", pos.is_draw(0), pos.has_repeated());
+
+    //     m = Move::make(Square::C6, Square::B8);
+    //     pos.do_move(m);
+    //     //pos.print();
+
+
+
+    // }
+
 
     // // //pos.set("rnbqkbnr/1pp1pppp/p2p4/8/Q7/2P5/PP1PPPPP/RNB1KBNR b KQkq - 1 3", false);
 

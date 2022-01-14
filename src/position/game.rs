@@ -178,6 +178,33 @@ impl Position {
         // Update king attacks used for fast check detection
         self.set_check_info();
 
+        // Calculate the repetition info. It is the ply distance from the previous
+        // occurrence of the same position, negative in the 3-fold case, or zero
+        // if the position was not repeated.
+        self.st_mut().repetition = 0;
+        let end = std::cmp::min(self.st().rule50, self.st().plies_from_null);
+        if end >= 4 {
+            //println!("end {}", end);
+
+            let mut st_idx = self.states.len()-3;
+
+            for idx in (4..=end).step_by(2) {
+
+                st_idx -= 2;
+                let mut st_prev = &self.states[st_idx];
+
+                let st_last = self.st();
+                //println!("{} {}", st_prev.key, st_last.key);
+
+                if st_prev.key == st_last.key {
+                    //println!("Hi");
+                    self.st_mut().repetition = if st_prev.repetition != 0 { -idx } else { idx };
+                    break;
+
+                }
+            }    
+        }
+
         debug_assert!(self.is_ok());
     }
 
@@ -404,9 +431,25 @@ impl Position {
         }
     }
 
+    /// Position::has_repeated() tests whether there has been at least one repetition
+    /// of positions since the last capture or pawn move.
+    pub fn has_repeated(&self) -> bool {
+        let mut st_idx = self.states.len() - 1;
+        let mut st_curr = self.st();
 
-    // do_castling() is a helper used to do/undo a castling move. This is
-    // a bit tricky in Chess960 where from/to squares can overlap.
+        let mut end = std::cmp::min(self.st().rule50, self.st().plies_from_null);
+        while end >= 4 {
+            end -= 1;
+            if st_curr.repetition != 0 { return true; }
+            st_curr = &self.states[st_idx - 1];
+            st_idx -= 1;
+        }
+        false
+    }
+
+
+    /// do_castling() is a helper used to do/undo a castling move. This is
+    /// a bit tricky in Chess960 where from/to squares can overlap.
     fn do_castling<const DO: bool>(
         &mut self,
         us: Color,

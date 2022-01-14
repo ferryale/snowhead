@@ -30,6 +30,7 @@ pub struct StateInfo {
     pub blockers_for_king: [Bitboard; COLOR_NB],
     pub pinners: [Bitboard; COLOR_NB],
     pub check_squares: [Bitboard; PIECE_TYPE_NB],
+    pub repetition: i32
 }
 
 impl StateInfo {
@@ -46,6 +47,7 @@ impl StateInfo {
             blockers_for_king: [EMPTY_BB; COLOR_NB],
             pinners: [EMPTY_BB; COLOR_NB],
             check_squares: [EMPTY_BB; PIECE_TYPE_NB],
+            repetition: 0
         }
     }
 
@@ -64,6 +66,7 @@ impl StateInfo {
             blockers_for_king: [EMPTY_BB; COLOR_NB],
             pinners: [EMPTY_BB; COLOR_NB],
             check_squares: [EMPTY_BB; PIECE_TYPE_NB],
+            repetition: 0
         }
     }
 }
@@ -148,7 +151,7 @@ impl Position {
 
     }
 
-    fn st(&self) -> &StateInfo {
+    pub fn st(&self) -> &StateInfo {
         self.states.last().unwrap()
     }
 

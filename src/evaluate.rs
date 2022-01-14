@@ -35,7 +35,7 @@ impl Position {
             }
         }
 
-        false
+        self.st().repetition != 0 && self.st().repetition < ply 
 
         // TODO: implement repetition
  
