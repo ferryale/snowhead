@@ -12,6 +12,9 @@ use crate::evaluate::*;
 use crate::position::inline::*;
 use crate::movepick::*;
 
+use std::io::{self, Write};
+
+
 #[derive(Debug, Clone, Copy)]
 pub struct Stack {
     ply: usize,
@@ -103,8 +106,8 @@ impl Thread {
         ret
     }
 
-    pub fn score_cp(&self) -> f32 {
-        self.value.0 as f32 / 100.0
+    pub fn score_cp(&self) -> i32 {
+        self.value.0
     }
 
     // pub fn score(&self) {
@@ -128,13 +131,17 @@ impl Thread {
     }
 
     pub fn search(&mut self, pos: &mut Position, depth: i32) {
+
+        let mut stdout = std::io::stdout();
+        let mut lock = stdout.lock();
         let mut alpha = -Value::INFINITE;
         let beta = Value::INFINITE;
         let mut value = Value::ZERO;
         let ply = 0;
         for curr_depth in 1..depth+1 {
             self.value = search(pos, 0, alpha, beta, curr_depth, self);
-            println!("{}", self.info());
+            writeln!(lock, "info {}", self.info());
+            io::stdout().flush().unwrap();
             if curr_depth < depth {
                 self.init_stacks();
             }
@@ -147,7 +154,8 @@ impl Thread {
             best_move_str = format!("{} {}", best_move_str, ponder_str);
         }
 
-        println!("{}", best_move_str);
+        writeln!(lock, "{}", best_move_str);
+        io::stdout().flush().unwrap();
 
     }
 }
