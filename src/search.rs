@@ -10,6 +10,7 @@ use crate::movegen::*;
 use crate::position::*;
 use crate::evaluate::*;
 use crate::position::inline::*;
+use crate::movepick::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Stack {
@@ -34,6 +35,7 @@ impl Stack {
 #[derive(Debug, Clone)]
 pub struct Thread {
     pub ss: [Stack; MAX_PLY as usize],
+    pub value: Value,
     root_moves: [ExtMove; MAX_MOVES],
 }
 
@@ -42,6 +44,7 @@ impl Thread {
 
         let mut thread = Thread {
             ss: [Stack::new(0); MAX_PLY as usize],
+            value: Value(0),
             root_moves: [ExtMove::new(); MAX_MOVES]
         };
 
@@ -100,6 +103,10 @@ impl Thread {
         ret
     }
 
+    pub fn score_cp(&self) -> f32 {
+        self.value.0 as f32 / 100.0
+    }
+
     // pub fn score(&self) {
     //     self.root_moves
         
@@ -107,8 +114,8 @@ impl Thread {
 
     pub fn info(&self) -> String {
 
-        format!("depth {} seldepth {} nodes {} pv{}", 
-            self.depth(), self.seldepth(), self.nodes(), self.pv_string())
+        format!("depth {} seldepth {} nodes {} score cp {} pv{}", 
+            self.depth(), self.seldepth(), self.nodes(), self.score_cp(), self.pv_string())
         
     }
 
@@ -126,7 +133,7 @@ impl Thread {
         let mut value = Value::ZERO;
         let ply = 0;
         for curr_depth in 1..depth+1 {
-            value = search(pos, 0, alpha, beta, curr_depth, self);
+            self.value = search(pos, 0, alpha, beta, curr_depth, self);
             println!("{}", self.info());
             if curr_depth < depth {
                 self.init_stacks();
@@ -181,13 +188,18 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         return qsearch(pos, ply, alpha, beta, 0, thread);
     }
 
-    let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
+    // let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
 
-    let num_moves = generate_legal(&pos, &mut list, 0);
+    // let num_moves = generate_legal(&pos, &mut list, 0);
+    let mut mp = MovePicker::new(pos, Move::NONE, depth, &mut thread.ss);
+    let mut num_moves = 0;
 
-    for ext_move in list {
-        let m = ext_move.m;
+    loop {
+
+        let m = mp.next_move(pos, false);
         if m == Move::NONE { break; }
+        if !pos.legal(m) { continue; }
+        num_moves += 1;
 
         pos.do_move(m);
 
@@ -235,21 +247,22 @@ fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth:
         alpha = value;
     }
 
+    let mut mp = MovePicker::new(pos, Move::NONE, depth, &mut thread.ss);
     let mut num_moves = 0;
 
-    let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
+    // let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
     
-    if pos.checkers() == 0 {
-        num_moves = generate(CAPTURES, &pos, &mut list, num_moves);
-        num_moves = generate(QUIET_CHECKS, &pos, &mut list, num_moves);
+    // if pos.checkers() == 0 {
+    //     num_moves = generate(CAPTURES, &pos, &mut list, num_moves);
+    //     num_moves = generate(QUIET_CHECKS, &pos, &mut list, num_moves);
 
-    } else {
-        num_moves = generate(EVASIONS, &pos, &mut list, num_moves);
-    }
+    // } else {
+    //     num_moves = generate(EVASIONS, &pos, &mut list, num_moves);
+    // }
     
 
-    for ext_move in list {
-        let m = ext_move.m;
+    loop {
+        let m = mp.next_move(pos, true);
         if m == Move::NONE { break; }
         if !pos.legal(m) { continue; }
 
