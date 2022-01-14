@@ -158,4 +158,19 @@ impl Position {
         self.chess960
     }
 
+    pub fn capture_or_promotion(&self, m: Move) -> bool {
+        debug_assert!(m.is_ok());
+        if m.move_type() != NORMAL {
+            m.move_type() != CASTLING
+        } else {
+            !self.empty(m.to())
+        }
+    }
+
+    pub fn capture(&self, m: Move) -> bool {
+        debug_assert!(m.is_ok());
+        (!self.empty(m.to()) && m.move_type() != CASTLING)
+        || m.move_type() == EN_PASSANT
+    }
+
 }
