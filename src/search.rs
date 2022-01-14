@@ -15,6 +15,7 @@ use crate::position::inline::*;
 pub struct Stack {
     ply: usize,
     pv: [Move; MAX_PLY as usize],
+    pub killers: [Move; 2],
     node_count: u32
 }
 
@@ -24,6 +25,7 @@ impl Stack {
         Stack {
             ply: ply,
             pv: [Move::NONE; MAX_PLY as usize],
+            killers: [Move::NONE; 2],
             node_count: 0
         }
     }
@@ -34,7 +36,6 @@ pub struct Thread {
     pub ss: [Stack; MAX_PLY as usize],
     root_moves: [ExtMove; MAX_MOVES],
 }
-
 
 impl Thread {
     pub fn new() -> Thread {
