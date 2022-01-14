@@ -64,7 +64,7 @@ impl Move {
             }
             let mut move_str = format!("{}{}", from.to_string(), to.to_string());
             if self.move_type() == PROMOTION {
-                move_str.push(PIECE_TO_CHAR[self.promotion_type()])
+                move_str.push(PIECE_TO_CHAR[self.promotion_type().0 as usize +8])
             }
             move_str
         }
