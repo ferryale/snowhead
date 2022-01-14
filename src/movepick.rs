@@ -206,6 +206,7 @@ impl MovePicker {
                 self.stage += 1;
                 self.cur = 0; // Point to beginning of bad captures
             }
+            
 
             Stage::BAD_CAPTURES => {
                 if self.cur < self.end_bad_captures {
