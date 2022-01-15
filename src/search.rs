@@ -40,6 +40,7 @@ pub struct Thread {
     pub ss: [Stack; MAX_PLY as usize],
     pub value: Value,
     root_moves: [ExtMove; MAX_MOVES],
+    root_idx: usize,
 }
 
 impl Thread {
@@ -48,7 +49,8 @@ impl Thread {
         let mut thread = Thread {
             ss: [Stack::new(0); MAX_PLY as usize],
             value: Value(0),
-            root_moves: [ExtMove::new(); MAX_MOVES]
+            root_moves: [ExtMove::new(); MAX_MOVES],
+            root_idx: 0,
         };
 
         thread.init_stacks();
@@ -122,6 +124,21 @@ impl Thread {
         
     }
 
+    pub fn best_move(&self) -> String {
+        let best_move_str = self.pv()[0].to_string(false);
+        let ponder_str = self.pv()[1].to_string(false);
+        format!("bestmove {} ponder {}", best_move_str, ponder_str)
+
+    }
+
+    pub fn print_info(&self) {
+        println!("info {}", self.info());
+    }
+
+    pub fn print_best_move(&self) {
+        println!("{}", self.best_move());
+    }
+
     fn init_stacks(&mut self) {
 
         for ply in 0..MAX_PLY as usize {
@@ -130,32 +147,54 @@ impl Thread {
 
     }
 
+    // fn sort_root_moves(&mut self) {
+
+    //     for ext_move in self.root_moves.iter().enumerate() {
+    //         if ext_move
+    //     }
+    // }
+
     pub fn search(&mut self, pos: &mut Position, depth: i32) {
 
         let mut stdout = std::io::stdout();
-        let mut lock = stdout.lock();
+        //let mut lock = stdout.lock();
         let mut alpha = -Value::INFINITE;
         let beta = Value::INFINITE;
         let mut value = Value::ZERO;
         let ply = 0;
         for curr_depth in 1..depth+1 {
             self.value = search(pos, 0, alpha, beta, curr_depth, self);
-            writeln!(lock, "info {}", self.info());
-            io::stdout().flush().unwrap();
+            
+            self.print_info();
+
+            self.root_moves.sort();
+            self.root_idx = 0;
+
+
+
+            //println!("info {}", self.info())
+
+            //writeln!(lock, "info {}", self.info());
+            //io::stdout().flush().unwrap();
             if curr_depth < depth {
                 self.init_stacks();
             }
 
         }
 
-        let mut best_move_str = format!("bestmove {}", self.pv()[0].to_string(false));
-        if depth > 1 {
-            let ponder_str = format!("ponder {}", self.pv()[1].to_string(false));
-            best_move_str = format!("{} {}", best_move_str, ponder_str);
-        }
+        self.print_best_move();
 
-        writeln!(lock, "{}", best_move_str);
-        io::stdout().flush().unwrap();
+        // let mut best_move_str = format!("bestmove {}", self.pv()[0].to_string(false));
+        // let mut ponder_str = format!("ponder {}", self.pv()[1].to_string(false));
+
+        // println!()
+        // if depth > 1 {
+        //     let ponder_str = format!("ponder {}", self.pv()[1].to_string(false));
+        //     best_move_str = format!("{} {}", best_move_str, ponder_str);
+        // }
+
+        //writeln!(lock, "{}", best_move_str);
+        //io::stdout().flush().unwrap();
 
     }
 }
@@ -181,9 +220,10 @@ fn update_pv(ss: &mut [Stack], ply: usize, m: Move){
 }
 
 fn update_killers(ss: &mut [Stack], ply: usize, m: Move) {
-    ss[ply].killers[1] = ss[ply].killers[0];
-    ss[ply].killers[0] = m;
-
+    if m != ss[ply].killers[0]{
+        ss[ply].killers[1] = ss[ply].killers[0];
+        ss[ply].killers[0] = m;
+    }
 }
 
 
@@ -206,14 +246,22 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
     // let num_moves = generate_legal(&pos, &mut list, 0);
     let mut mp = MovePicker::new(pos, Move::NONE, ply, depth, &mut thread.ss);
-    let mut num_moves = 0;
+    let mut num_legal = 0;
+    let root_node = ply == 0;
 
     loop {
 
-        let m = mp.next_move(pos, false);
+        let m = if root_node && depth > 1 {
+            thread.root_moves[thread.root_idx].m
+        } else { 
+            mp.next_move(pos, false)
+        };
+
+        
+
         if m == Move::NONE { break; }
         if !pos.legal(m) { continue; }
-        num_moves += 1;
+        num_legal += 1;
 
         pos.do_move(m);
 
@@ -234,10 +282,15 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
             update_pv(&mut thread.ss, ply, m);
         }
 
+        if root_node { 
+            thread.root_moves[thread.root_idx] = ExtMove { m: m, value: value.0};
+            thread.root_idx += 1; 
+        }
+
     }
 
     // If there are no legal moves at this point, it is either checkmate or stalemate
-    if num_moves == 0 {
+    if num_legal == 0 {
         // Stalemate
         if pos.checkers() == 0 {
             return Value::DRAW;
