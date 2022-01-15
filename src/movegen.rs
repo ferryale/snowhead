@@ -38,6 +38,24 @@ impl ExtMove {
     }
 }
 
+impl Ord for ExtMove {
+    fn cmp(&self, other: &ExtMove) -> std::cmp::Ordering {
+        self.value.cmp(&other.value)
+    }
+}
+
+impl PartialOrd for ExtMove {
+    fn partial_cmp(&self, other: &ExtMove) -> Option<std::cmp::Ordering> {
+        Some(other.cmp(self))
+    }
+}
+
+impl PartialEq for ExtMove {
+    fn eq(&self, other: &ExtMove) -> bool {
+        self.value == other.value
+    }
+}
+
 
 fn generate_moves(us: Color, pt: PieceType, checks: bool,
     pos: &Position, list: &mut [ExtMove], mut idx: usize, 
