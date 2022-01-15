@@ -172,7 +172,7 @@ impl Thread {
 
 
 
-            //println!("info {}", self.info())
+            //println!("{:?}", self.root_moves);
 
             //writeln!(lock, "info {}", self.info());
             //io::stdout().flush().unwrap();
@@ -253,9 +253,14 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
         let m = if root_node && depth > 1 {
             thread.root_moves[thread.root_idx].m
+            
         } else { 
             mp.next_move(pos, false)
         };
+
+        // if root_node { 
+        //     println!("depth {}, move {}", depth, m.to_string(false));
+        // }
 
         
 
@@ -283,6 +288,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         }
 
         if root_node { 
+            //println!("depth {}, move {}", depth, m.to_string(false));
             thread.root_moves[thread.root_idx] = ExtMove { m: m, value: value.0};
             thread.root_idx += 1; 
         }

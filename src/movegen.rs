@@ -33,7 +33,7 @@ impl ExtMove {
     pub fn new() -> ExtMove {
         ExtMove {
             m: Move::NONE,
-            value: 0
+            value: -300000
         }
     }
 }

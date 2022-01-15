@@ -5,6 +5,7 @@ use snowhead::types::r#move::*;
 use snowhead::zobrist::*;
 use snowhead::position::*;
 use snowhead::movegen::*;
+use snowhead::movepick::*;
 use snowhead::psqt::*;
 use snowhead::search::*;
 use snowhead::uci;
@@ -19,7 +20,12 @@ fn main() {
 
     // let mut pos = Position::new();
 
-    // pos.set("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", false);
+    // pos.set("rnbqr3/ppppkppp/4pn2/8/1P1P4/2N1P3/1PP1NPPP/R1BQKB1R b KQ - 3 7", false);
+
+    // let m = Move(53055);
+
+    // pos.print();
+    // println!("{} {} {}", pos.legal(m), pos.pseudo_legal(m), m.to_string(false));
 
     // for idx in 0..3 {
     //     let mut m = Move::make(Square::B1, Square::C3);
@@ -156,9 +162,9 @@ fn main() {
     // pos.set(start_fen, false);
 
     // let mut pos = Position::new();
-    // pos.set("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", false);
+    // pos.set("rnbqkb1r/pppp1ppp/4pn2/8/3P4/2N1P3/PPP2PPP/R1BQKBNR b KQkq - 1 3 ", false);
 
-    // let nodes = perft(&mut pos, 6, true);
+    // let nodes = perft(&mut pos, 7, true);
     // println!("{:?}", nodes);
 
     // let mut thread = Thread::new();

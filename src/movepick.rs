@@ -309,9 +309,13 @@ impl Position {
                 generate(NON_EVASIONS, self, &mut list, 0);
             };
 
+            // let num_moves = generate_legal(self, &mut list, 0);
+
             for pseudo_legal in &list {
                 if pseudo_legal.m == m { return true; }
             }
+
+            return false;
             
         }
 

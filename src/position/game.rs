@@ -51,6 +51,9 @@ impl Position {
 
         // Castling
         if m.move_type() == CASTLING {
+            if pc != Piece::make(us, KING) {
+                println!("pos {} move {} {:?}", self.fen(), m.to_string(false), m);
+            }
             debug_assert!(pc == Piece::make(us, KING));
             debug_assert!(captured == Piece::make(us, ROOK));
 
@@ -332,6 +335,9 @@ impl Position {
 
         if m.move_type() == CASTLING
         {
+            // Check if the from piece is a king: BUG FIX
+            // if self.piece_on(from).piece_type() != KING { return false; }
+
             // After castling, the rook and king final positions are the same in
             // Chess960 as they would be in standard chess.
             to = relative_square(us, if to > from { Square::G1 } else { Square::C1 });
