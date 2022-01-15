@@ -91,6 +91,7 @@ pub struct MovePicker {
     end_bad_captures: usize,
     stage: Stage,
     depth: i32,
+    ply: usize,
     tt_move: Move,
     killers: [Move; 2],
     list: [ExtMove; MAX_MOVES as usize],
@@ -104,7 +105,7 @@ pub struct MovePicker {
 /// is at the current node.
 
 impl MovePicker {
-    pub fn new(pos: &Position, ttm: Move, depth: i32, ss: &[search::Stack]) -> MovePicker {
+    pub fn new(pos: &Position, ttm: Move, ply: usize, depth: i32, ss: &[search::Stack]) -> MovePicker {
         let mut stage = if pos.checkers() != 0 { Stage::EVASION_TT } else {
             if depth > 0 {
                 Stage::MAIN_TT
@@ -123,8 +124,9 @@ impl MovePicker {
             end_bad_captures: 0,
             stage: stage,
             tt_move: ttm,
-            killers: [ss[0].killers[0], ss[0].killers[1]],
+            killers: [ss[ply].killers[0], ss[ply].killers[1]],
             depth: depth,
+            ply: ply,
             list: [ExtMove {m: Move::NONE, value: 0}; MAX_MOVES as usize],
         }
     }
@@ -166,7 +168,9 @@ impl MovePicker {
                 let m = self.killers[0];
                 if m != Move::NONE
                     && m != self.tt_move
+                    && pos.pseudo_legal(m)
                     && !pos.capture(m)
+                    
                 {
                     return m;
                 }
@@ -177,6 +181,7 @@ impl MovePicker {
                 let m = self.killers[1];
                 if m != Move::NONE
                     && m != self.tt_move
+                    && pos.pseudo_legal(m)
                     && !pos.capture(m)
                 {
                     return m;
@@ -279,4 +284,104 @@ impl MovePicker {
         }
 
     }
+}
+
+impl Position {
+
+    // pseudo_legal() takes a random move and tests whether the move is
+    // pseudo legal. It is used to validate moves from T that can be
+    // corrupted due to SMP concurrent access or hash position key aliasing.
+
+    pub fn pseudo_legal(&self, m: Move) -> bool {
+        let us = self.side_to_move;
+        let from = m.from();
+        let to = m.to();
+        let pc = self.moved_piece(m);
+
+        // Use a slower but simpler function for uncommon cases
+        if m.move_type() != NORMAL {
+            let mut list = [ExtMove {m: Move::NONE, value: 0}; MAX_MOVES as usize];
+            
+            // Skip legality check of generate_legal
+            let num_moves = if self.checkers() != 0 {
+                generate(EVASIONS, self, &mut list, 0);
+            } else {
+                generate(NON_EVASIONS, self, &mut list, 0);
+            };
+
+            for pseudo_legal in &list {
+                if pseudo_legal.m == m { return true; }
+            }
+            
+        }
+
+        // It is not a promotion, so promotion piece must be empty
+        if m.promotion_type() != KNIGHT {
+            return false;
+        }
+
+        // If the 'from' square is not occupied by a piece belonging to the
+        // side to move, the move is obviously not legal.
+        if pc == NO_PIECE || pc.color() != us {
+            return false;
+        }
+
+        // The destination square cannot be occupied by a friendly piece
+        if self.pieces_c(us) & to != 0 {
+            return false;
+        }
+
+        // Handle the special case of a pawn move
+        if pc.piece_type() == PAWN {
+            // We have already handled promotion moves, so destination
+            // cannot be on the 8th/1st rank.
+            if to.rank() == relative_rank(us, RANK_8) {
+                return false;
+            }
+
+            if self.attacks_from_pawn(us, from) & self.pieces_c(!us) & to == 0
+                && !((from + pawn_push(us) == to) && self.empty(to))
+                && !(  from + 2 * pawn_push(us) == to
+                    && from.rank() == relative_rank(us, RANK_2)
+                    && self.empty(to)
+                    && self.empty(to - pawn_push(us)))
+            {
+                return false;
+            }
+        } else if self.attacks_from(pc.piece_type(), from) & to == 0 {
+            return false;
+        }
+
+        // Evasions generator already takes care of avoiding certain kinds of
+        // illegal moves and legal() relies on this. We therefore have to take
+        // care that the same kind of moves are filtered out here.
+        if self.checkers() != 0 {
+            if pc.piece_type() != KING {
+                // Double check? In this case a king move is required
+                if more_than_one(self.checkers()) {
+                    return false;
+                }
+
+                // Our move must be a blocking evasion or a capture of the
+                // checking piece
+                // if (between_bb(lsb(self.checkers()), self.square(us, KING))
+                //     | self.checkers()) & to == 0
+                if between_bb(self.square(us, KING), lsb(self.checkers())) & to == 0
+                {
+                    return false;
+                }
+            }
+            // In case of king moves under check we have to remove king so as
+            // to catch invalid moves like b1a1 when opposite queen is on c1.
+            else if self.attackers_to_occ(to, self.pieces() ^ from)
+                & self.pieces_c(!us) != 0
+            {
+                return false;
+            }
+        }
+
+        true
+    }
+
+
 }

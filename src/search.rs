@@ -180,6 +180,12 @@ fn update_pv(ss: &mut [Stack], ply: usize, m: Move){
     
 }
 
+fn update_killers(ss: &mut [Stack], ply: usize, m: Move) {
+    ss[ply].killers[1] = ss[ply].killers[0];
+    ss[ply].killers[0] = m;
+
+}
+
 
 fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: i32, thread: &mut Thread) -> Value {
 
@@ -199,7 +205,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
     // let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
 
     // let num_moves = generate_legal(&pos, &mut list, 0);
-    let mut mp = MovePicker::new(pos, Move::NONE, depth, &mut thread.ss);
+    let mut mp = MovePicker::new(pos, Move::NONE, ply, depth, &mut thread.ss);
     let mut num_moves = 0;
 
     loop {
@@ -215,7 +221,12 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
         pos.undo_move(m);
 
-        if value >= beta {
+
+        if value >= beta { // Fail high.
+            
+            // Store move as killer.
+            // No need to check if it is a capture because movepicker already does it.
+            update_killers(&mut thread.ss, ply, m); 
             return beta;
         }
         if value > alpha {
@@ -255,7 +266,7 @@ fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth:
         alpha = value;
     }
 
-    let mut mp = MovePicker::new(pos, Move::NONE, depth, &mut thread.ss);
+    let mut mp = MovePicker::new(pos, Move::NONE, ply, depth, &mut thread.ss);
     let mut num_moves = 0;
 
     // let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
@@ -281,6 +292,7 @@ fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth:
         pos.undo_move(m);
 
         if value >= beta {
+            update_killers(&mut thread.ss, ply, m);
             return beta;
         }
         if value > alpha {
