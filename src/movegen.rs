@@ -22,7 +22,7 @@ pub const EVASIONS: GenType = GenType(3);
 pub const NON_EVASIONS: GenType = GenType(4);
 pub const LEGAL: GenType = GenType(5);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq)]
 pub struct ExtMove {
     pub m: Move,
     pub value: i32,
