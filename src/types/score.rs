@@ -1,8 +1,8 @@
 use super::piece::{Piece, PIECE_NB, COLOR_NB};
 
 pub const MAX_MOVES: usize = 256;
-pub const MAX_PLY: i32 = 128;
-pub const MAX_MATE_PLY : i32 = 128;
+pub const MAX_PLY: usize = 128;
+pub const MAX_MATE_PLY : usize = 128;
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Depth(pub i32);
