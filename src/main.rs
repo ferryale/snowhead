@@ -1,10 +1,10 @@
 // use snowhead::types::square::*;
 // use snowhead::types::piece::*;
 // use snowhead::types::bitboard::*;
-use snowhead::types::r#move::Move;
-// use snowhead::zobrist::*;
-use snowhead::position::{Position};
-use snowhead::movegen::{ExtMove, generate_legal};
+// use snowhead::types::r#move::Move;
+// // use snowhead::zobrist::*;
+// use snowhead::position::{Position};
+// use snowhead::movegen::{ExtMove, generate_legal};
 // use snowhead::movepick::*;
 // use snowhead::psqt::*;
 // use snowhead::search::*;
@@ -177,55 +177,6 @@ fn main() {
 
     // //println!("{:?} {:?} {:?} {:?}", thread.ss[0], thread.ss[1], thread.ss[2], thread.ss[3]);
 
-
 }
 
-fn perft(pos: &mut Position, depth: u32, root: bool) -> usize {
 
-    let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
-
-    let leaf = depth == 2;
-    let mut cnt = 0;
-    let mut nodes = 0;
-
-    let mut _num_moves = generate_legal(&pos, &mut list, 0);
-    //println!("{}", num_moves);
-    //let prev_pos = pos.clone();
-
-    for ext_move in list{
-
-        //println!("{}", depth);
-
-        if ext_move.m == Move::NONE { break; }
-
-
-        if root && depth <= 1 {
-            cnt = 1;
-            nodes += 1;
-        } else {
-            //pos.print();
-            //println!("{}", ext_move.m.to_string(false));
-            pos.do_move(ext_move.m);
-
-            //pos.print();
-            
-            if leaf { cnt = generate_legal(&pos, &mut list, 0); }
-            else { cnt = perft(pos, depth - 1, false) };
-            nodes += cnt;
-
-            pos.undo_move(ext_move.m);
-            //pos.print();
-            //println!("\n\n\n");
-            //assert_eq!(&prev_pos, pos);
-
-
-        }
-        
-        if root {
-            println!("{}: {}", ext_move.m.to_string(pos.is_chess960()), cnt);
-        }
-        
-    }
-    nodes
-
-}
