@@ -317,10 +317,13 @@ enable_base_i32_operations_for_u32_on!(Square);
 enable_base_i32_operations_for_u32_on!(File);
 enable_base_i32_operations_for_u32_on!(Rank);
 enable_base_i32_operations_for_u32_on!(CastlingRight);
+//enable_base_i32_operations_for_u32_on!(Ply);
 enable_base_i32_operations_for_i32_on!(Direction);
 
 enable_full_i32_operations_for_i32_on!(Value);
 enable_full_i32_operations_for_i32_on!(Depth);
+
+//enable_base_operations_on!(Ply);
 
 enable_full_operations_on!(Value);
 enable_full_operations_on!(Depth);
@@ -337,4 +340,5 @@ enable_indexing_by!(PieceType);
 enable_indexing_by!(Piece);
 enable_indexing_by!(CastlingRight);
 enable_indexing_by!(Move);
+//enable_indexing_by!(Ply);
 

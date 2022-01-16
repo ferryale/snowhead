@@ -1,8 +1,11 @@
 use super::piece::{Piece, PIECE_NB, COLOR_NB};
 
+// #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+// pub struct Ply(pub u32);
+
 pub const MAX_MOVES: usize = 256;
-pub const MAX_PLY: usize = 128;
-pub const MAX_MATE_PLY : usize = 128;
+pub const MAX_PLY: i32 = 128;
+pub const MAX_MATE_PLY: i32 = 128;
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Depth(pub i32);
@@ -83,6 +86,16 @@ impl std::ops::Mul<Value> for i32 {
     type Output = Value;
     fn mul(self, rhs: Value) -> Value { Value(self * rhs.0) }
 }
+
+// impl std::ops::Add<Ply> for Value {
+//     type Output = Value;
+//     fn add(self, rhs: Ply) -> Value { Value(self + rhs.0) }
+// }
+
+// impl std::ops::Sub<Ply> for Value {
+//     type Output = Value;
+//     fn sub(self, rhs: Ply) -> Value { Value(self - rhs.0) }
+// }
 
 pub fn mate_in(ply: i32) -> Value {
     Value::MATE - ply
