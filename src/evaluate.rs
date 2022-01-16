@@ -1,14 +1,9 @@
-use crate::attacks::attack_bb::*;
-use crate::types::square::*;
-use crate::types::piece::*;
-use crate::types::r#move::*;
-use crate::types::bitboard::*;
-use crate::types::score::*;
-use crate::zobrist::*;
-use crate::psqt;
-use crate::movegen::*;
-use crate::position::*;
-use crate::position::inline::*;
+use crate::types::piece::WHITE;
+use crate::types::r#move::Move;
+use crate::types::bitboard::EMPTY_BB;
+use crate::types::score::Value;
+use crate::movegen::{ExtMove, generate_legal};
+use crate::position::Position;
 
 pub fn evaluate(pos: &Position) -> Value {
     if pos.side_to_move() == WHITE { 
@@ -37,7 +32,5 @@ impl Position {
 
         self.st().repetition != 0 && self.st().repetition < ply 
 
-        // TODO: implement repetition
- 
     }
 }
