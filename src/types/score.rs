@@ -6,6 +6,9 @@ pub const MAX_MATE_PLY : i32 = 128;
 
 pub type Phase = i32;
 
+// #[derive(Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+// pub struct Depth(pub i32);
+
 pub const PHASE_ENDGAME: Phase = 0;
 pub const PHASE_MIDGAME: Phase = 128;
 
@@ -68,32 +71,9 @@ impl std::ops::Neg for Value {
     fn neg(self) -> Self { Value(-self.0) }
 }
 
-impl std::ops::Add<Value> for Value {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self { Value(self.0 + rhs.0) }
-}
-
-impl std::ops::AddAssign<Value> for Value {
-    fn add_assign(&mut self, rhs: Self) { *self = *self + rhs; }
-}
-
-impl std::ops::Sub<Value> for Value {
-    type Output = Self;
-    fn sub(self, rhs: Self) -> Self { Value(self.0 - rhs.0) }
-}
-
-impl std::ops::SubAssign<Value> for Value {
-    fn sub_assign(&mut self, rhs: Self) { *self = *self - rhs; }
-}
-
 impl std::ops::Mul<Value> for i32 {
     type Output = Value;
     fn mul(self, rhs: Value) -> Value { Value(self * rhs.0) }
-}
-
-impl std::ops::Div<Value> for Value {
-    type Output = i32;
-    fn div(self, rhs: Self) -> i32 { self.0 / rhs.0 }
 }
 
 pub fn mate_in(ply: i32) -> Value {

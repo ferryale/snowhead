@@ -4,25 +4,6 @@ mod square_test;
 
 use super::piece::{Color, WHITE, BLACK};
 
-
-//use super::*; // pub(super) use enable_base_operations_for_u32_on;
-//#[macro_use]   
-//use super::{enable_base_operations_for_u32_on, enable_indexing_by};
-
-//enable_base_operations_for_u32_on!(Square);
-// enable_base_operations_for_u32_on!(File);
-// enable_base_operations_for_u32_on!(Rank);
-// // enable_base_operations_for_u32_on!(CastlingRight);
-// // enable_base_operations_for_i32_on!(Direction);
-
-// // enable_bit_operations_on!(CastlingRight);
-// // enable_bit_operations_on!(Bitboard);
-// // enable_bit_assign_operations_on!(CastlingRight);
-
-// enable_indexing_by!(Square);
-// enable_indexing_by!(File);
-// enable_indexing_by!(Rank);
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct File(pub u32);
 

@@ -35,7 +35,7 @@ impl Stage {
     
 }
 
-types::enable_base_operations_for_u32_on!(Stage);
+types::enable_base_i32_operations_for_u32_on!(Stage);
 
 
 /// partial_insertion_sort() sorts moves in descending order up to and

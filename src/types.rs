@@ -11,7 +11,85 @@ use self::r#move::{Move, CastlingRight};
 use self::bitboard::Bitboard;
 use self::score::Value;
 
-macro_rules! enable_base_operations_for_u32_on {
+macro_rules! enable_base_operations_on {
+
+    ($ty: ident) => {
+
+        impl ops::Add<$ty> for $ty {
+            type Output = $ty;
+            fn add(self, rhs: $ty) -> Self {
+                $ty(self.0 + rhs.0)
+            }
+
+        }
+
+        impl ops::AddAssign<$ty> for $ty {
+            fn add_assign(&mut self, rhs: $ty) {
+                *self = *self + rhs;
+            }
+
+        }
+
+        impl ops::Sub<$ty> for $ty {
+            type Output = $ty;
+            fn sub(self, rhs: $ty) -> Self {
+                $ty(self.0 - rhs.0)
+            }
+
+        }
+
+        impl ops::SubAssign<$ty> for $ty {
+            fn sub_assign(&mut self, rhs: $ty) {
+                *self = *self - rhs;
+            }
+
+        }
+
+    };
+
+}
+
+macro_rules! enable_full_operations_on {
+
+    ($ty: ident) => {
+
+        enable_base_operations_on!($ty);
+
+        impl ops::Mul<$ty> for $ty {
+            type Output = $ty;
+            fn mul(self, rhs: $ty) -> Self {
+                $ty(self.0 * rhs.0)
+            }
+
+        }
+
+        impl ops::MulAssign<$ty> for $ty {
+            fn mul_assign(&mut self, rhs: $ty) {
+                *self = *self * rhs;
+            }
+
+        }
+
+        impl ops::Div<$ty> for $ty {
+            type Output = $ty;
+            fn div(self, rhs: $ty) -> Self {
+                $ty(self.0 / rhs.0)
+            }
+
+        }
+
+        impl ops::DivAssign<$ty> for $ty {
+            fn div_assign(&mut self, rhs: $ty) {
+                *self = *self / rhs;
+            }
+
+        }
+
+    };
+
+}
+
+macro_rules! enable_base_i32_operations_for_u32_on {
 
     ($ty: ident) => {
 
@@ -49,7 +127,7 @@ macro_rules! enable_base_operations_for_u32_on {
 
 }
 
-macro_rules! enable_base_operations_for_i32_on {
+macro_rules! enable_base_i32_operations_for_i32_on {
 
     ($ty: ident) => {
 
@@ -87,11 +165,11 @@ macro_rules! enable_base_operations_for_i32_on {
 
 }
 
-macro_rules! enable_full_operations_for_i32_on {
+macro_rules! enable_full_i32_operations_for_i32_on {
 
     ($ty: ident) => {
 
-        enable_base_operations_for_i32_on!($ty);
+        enable_base_i32_operations_for_i32_on!($ty);
 
         impl ops::Mul<i32> for $ty {
             type Output = $ty;
@@ -232,15 +310,19 @@ macro_rules! enable_indexing_by {
     };
 }
 
-pub(crate) use enable_base_operations_for_u32_on;
+pub(crate) use enable_base_i32_operations_for_u32_on;
 pub(crate) use enable_indexing_by;
 
-enable_base_operations_for_u32_on!(Square);
-enable_base_operations_for_u32_on!(File);
-enable_base_operations_for_u32_on!(Rank);
-enable_base_operations_for_u32_on!(CastlingRight);
-enable_base_operations_for_i32_on!(Direction);
-enable_full_operations_for_i32_on!(Value);
+enable_base_i32_operations_for_u32_on!(Square);
+enable_base_i32_operations_for_u32_on!(File);
+enable_base_i32_operations_for_u32_on!(Rank);
+enable_base_i32_operations_for_u32_on!(CastlingRight);
+enable_base_i32_operations_for_i32_on!(Direction);
+
+
+enable_full_i32_operations_for_i32_on!(Value);
+enable_full_operations_on!(Value);
+//enable_full_i32_operations_for_i32_on!(Depth);
 
 enable_bit_operations_on!(CastlingRight);
 enable_bit_operations_on!(Bitboard);
