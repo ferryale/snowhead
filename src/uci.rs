@@ -38,7 +38,7 @@ fn position(pos: &mut Position, args: &str) {
     }
 
     pos.init_states();
-    pos.set(fen, false);
+    pos.set(fen, pos.is_chess960());
     // pos_data.fen = String::from(fen);
     // pos_data.moves = Vec::new();
 
