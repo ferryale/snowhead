@@ -1,6 +1,7 @@
 use crate::movegen::{ExtMove, generate_legal};
 use crate::position::Position;
 use crate::search::Thread;
+use crate::perft::perft;
 
 use crate::types::r#move::Move;
 use crate::types::score::{Depth};
@@ -63,17 +64,29 @@ fn position(pos: &mut Position, args: &str) {
 
 fn go(pos: &mut Position, args: &str) {
 
+    let mut do_perft = false;
     let mut depth = 0;
     let mut iter = args.split_whitespace();
     while let Some(token) = iter.next() {
         match token {
             "depth" => depth = iter.next().unwrap().parse().unwrap(),
+            "perft" => { 
+                depth = iter.next().unwrap().parse().unwrap();
+                do_perft = true;
+            },
             _ => {}
         }
     }
 
-    let mut thread = Thread::new();
-    thread.search(pos, Depth(depth));
+    if do_perft {
+        let nodes = perft::<true>(pos, Depth(depth));
+        println!("Total nodes seached: {}", nodes);
+    } else {
+        let mut thread = Thread::new();
+        thread.search(pos, Depth(depth));
+    }
+
+    
 }
 
 // cmd_loop() waits for a command from stdin, parses it and calls the
