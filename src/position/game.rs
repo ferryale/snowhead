@@ -194,13 +194,12 @@ impl Position {
             for idx in (4..=end).step_by(2) {
 
                 st_idx -= 2;
-                let mut st_prev = &self.states[st_idx];
+                let st_prev = &self.states[st_idx];
 
                 let st_last = self.st();
-                //println!("{} {}", st_prev.key, st_last.key);
+
 
                 if st_prev.key == st_last.key {
-                    //println!("Hi");
                     self.st_mut().repetition = if st_prev.repetition != 0 { -idx } else { idx };
                     break;
 

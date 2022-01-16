@@ -1,9 +1,10 @@
 use crate::types::piece::WHITE;
-use crate::types::r#move::Move;
 use crate::types::bitboard::EMPTY_BB;
+use crate::types::r#move::Move;
 use crate::types::score::Value;
-use crate::movegen::{ExtMove, generate_legal};
 use crate::position::Position;
+use crate::movegen::{ExtMove, generate_legal};
+
 
 pub fn evaluate(pos: &Position) -> Value {
     if pos.side_to_move() == WHITE { 

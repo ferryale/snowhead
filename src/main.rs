@@ -1,13 +1,13 @@
-use snowhead::types::square::*;
-use snowhead::types::piece::*;
-use snowhead::types::bitboard::*;
-use snowhead::types::r#move::*;
-use snowhead::zobrist::*;
-use snowhead::position::*;
-use snowhead::movegen::*;
-use snowhead::movepick::*;
-use snowhead::psqt::*;
-use snowhead::search::*;
+// use snowhead::types::square::*;
+// use snowhead::types::piece::*;
+// use snowhead::types::bitboard::*;
+use snowhead::types::r#move::Move;
+// use snowhead::zobrist::*;
+use snowhead::position::{Position};
+use snowhead::movegen::{ExtMove, generate_legal};
+// use snowhead::movepick::*;
+// use snowhead::psqt::*;
+// use snowhead::search::*;
 use snowhead::uci;
 
 
@@ -188,7 +188,7 @@ fn perft(pos: &mut Position, depth: u32, root: bool) -> usize {
     let mut cnt = 0;
     let mut nodes = 0;
 
-    let mut num_moves = generate_legal(&pos, &mut list, 0);
+    let mut _num_moves = generate_legal(&pos, &mut list, 0);
     //println!("{}", num_moves);
     //let prev_pos = pos.clone();
 

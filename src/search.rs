@@ -1,23 +1,13 @@
-use crate::attacks::attack_bb::*;
-use crate::types::square::*;
-use crate::types::piece::*;
-use crate::types::r#move::*;
-use crate::types::bitboard::*;
-use crate::types::score::*;
-use crate::zobrist::*;
-use crate::psqt;
-use crate::movegen::*;
-use crate::position::*;
-use crate::evaluate::*;
-use crate::position::inline::*;
-use crate::movepick::*;
-
-use std::io::{self, Write};
-
+use crate::types::r#move::Move;
+use crate::types::score::{Value, mated_in, MAX_PLY, MAX_MOVES};
+use crate::movegen::ExtMove;
+use crate::position::Position;
+use crate::evaluate::evaluate;
+use crate::movepick::MovePicker;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Stack {
-    ply: usize,
+    // ply: usize,
     pv: [Move; MAX_PLY as usize],
     pub killers: [Move; 2],
     node_count: u32
@@ -27,7 +17,7 @@ pub struct Stack {
 impl Stack {
     pub fn new(ply: usize) -> Stack {
         Stack {
-            ply: ply,
+            // ply: ply,
             pv: [Move::NONE; MAX_PLY as usize],
             killers: [Move::NONE; 2],
             node_count: 0
@@ -156,26 +146,19 @@ impl Thread {
 
     pub fn search(&mut self, pos: &mut Position, depth: i32) {
 
-        let mut stdout = std::io::stdout();
-        //let mut lock = stdout.lock();
-        let mut alpha = -Value::INFINITE;
+       
+        let alpha = -Value::INFINITE;
         let beta = Value::INFINITE;
-        let mut value = Value::ZERO;
         let ply = 0;
+
         for curr_depth in 1..depth+1 {
-            self.value = search(pos, 0, alpha, beta, curr_depth, self);
+            self.value = search(pos, ply, alpha, beta, curr_depth, self);
             
             self.print_info();
 
             self.root_moves.sort();
             self.root_idx = 0;
 
-
-
-            //println!("{:?}", self.root_moves);
-
-            //writeln!(lock, "info {}", self.info());
-            //io::stdout().flush().unwrap();
             if curr_depth < depth {
                 self.init_stacks();
             }
@@ -183,18 +166,6 @@ impl Thread {
         }
 
         self.print_best_move();
-
-        // let mut best_move_str = format!("bestmove {}", self.pv()[0].to_string(false));
-        // let mut ponder_str = format!("ponder {}", self.pv()[1].to_string(false));
-
-        // println!()
-        // if depth > 1 {
-        //     let ponder_str = format!("ponder {}", self.pv()[1].to_string(false));
-        //     best_move_str = format!("{} {}", best_move_str, ponder_str);
-        // }
-
-        //writeln!(lock, "{}", best_move_str);
-        //io::stdout().flush().unwrap();
 
     }
 }
@@ -343,6 +314,7 @@ fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth:
         let m = mp.next_move(pos, true);
         if m == Move::NONE { break; }
         if !pos.legal(m) { continue; }
+        num_moves += 1;
 
         pos.do_move(m);
 

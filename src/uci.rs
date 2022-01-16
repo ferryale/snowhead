@@ -1,9 +1,8 @@
-use crate::movegen::*;
-use crate::position::*;
-use crate::position::inline::*;
-use crate::search::*;
+use crate::movegen::{ExtMove, generate_legal};
+use crate::position::Position;
+use crate::search::Thread;
 
-use crate::types::r#move::*;
+use crate::types::r#move::Move;
 
 
 use std;
@@ -150,7 +149,7 @@ impl Move {
 
         let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
 
-        let num_moves = generate_legal(&pos, &mut list, 0);
+        let _num_moves = generate_legal(&pos, &mut list, 0);
 
         for ext_move in list {
             let m = ext_move.m;

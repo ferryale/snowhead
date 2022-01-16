@@ -1,19 +1,13 @@
-use crate::attacks::attack_bb::*;
-use crate::types::square::*;
-use crate::types::piece::*;
-use crate::types::r#move::*;
-use crate::types::bitboard::*;
-use crate::types::score::*;
-use crate::zobrist::*;
-use crate::psqt;
-use crate::movegen::*;
-use crate::position::*;
-use crate::evaluate::*;
-use crate::position::inline::*;
-use crate::position::game::*;
-use crate::types::*;
+use crate::types;
+use types::square::{RANK_2, RANK_8, relative_rank, pawn_push};
+use types::piece::{PAWN, KNIGHT, KING, NO_PIECE};
+use types::bitboard::{lsb, more_than_one};
+use types::r#move::{Move, NORMAL};
+use types::score::{MAX_MOVES, MG, piece_value};
+use crate::attacks::attack_bb::{between_bb};
+use crate::position::Position;
+use crate::movegen::{ExtMove, EVASIONS, NON_EVASIONS, CAPTURES, QUIETS, QUIET_CHECKS, generate};
 use crate::search;
-
 use std::ops;
 
 
@@ -41,7 +35,7 @@ impl Stage {
     
 }
 
-enable_base_operations_for_u32_on!(Stage);
+types::enable_base_operations_for_u32_on!(Stage);
 
 
 /// partial_insertion_sort() sorts moves in descending order up to and
@@ -90,8 +84,8 @@ pub struct MovePicker {
     end_moves: usize,
     end_bad_captures: usize,
     stage: Stage,
-    depth: i32,
-    ply: usize,
+    // depth: i32,
+    // ply: usize,
     tt_move: Move,
     killers: [Move; 2],
     list: [ExtMove; MAX_MOVES as usize],
@@ -125,8 +119,8 @@ impl MovePicker {
             stage: stage,
             tt_move: ttm,
             killers: [ss[ply].killers[0], ss[ply].killers[1]],
-            depth: depth,
-            ply: ply,
+            // depth: depth,
+            // ply: ply,
             list: [ExtMove {m: Move::NONE, value: 0}; MAX_MOVES as usize],
         }
     }
@@ -303,7 +297,7 @@ impl Position {
             let mut list = [ExtMove {m: Move::NONE, value: 0}; MAX_MOVES as usize];
             
             // Skip legality check of generate_legal
-            let num_moves = if self.checkers() != 0 {
+            let _num_moves = if self.checkers() != 0 {
                 generate(EVASIONS, self, &mut list, 0);
             } else {
                 generate(NON_EVASIONS, self, &mut list, 0);
