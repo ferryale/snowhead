@@ -135,7 +135,7 @@ pub fn cmd_loop() {
         match token {
             "ucinewgame" | "quit" | "stop" => {},
             "uci" => {
-                println!("id name Snowhead");
+                println!("id name Snowhead v0.1");
                 println!("uciok");
             }
             "go" => go(&mut pos, args),
