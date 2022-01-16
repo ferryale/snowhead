@@ -3,6 +3,7 @@ use crate::position::Position;
 use crate::search::Thread;
 
 use crate::types::r#move::Move;
+use crate::types::score::{Depth};
 
 
 use std;
@@ -72,7 +73,7 @@ fn go(pos: &mut Position, args: &str) {
     }
 
     let mut thread = Thread::new();
-    thread.search(pos, depth as i32);
+    thread.search(pos, Depth(depth));
 }
 
 // cmd_loop() waits for a command from stdin, parses it and calls the

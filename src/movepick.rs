@@ -3,7 +3,7 @@ use types::square::{RANK_2, RANK_8, relative_rank, pawn_push};
 use types::piece::{PAWN, KNIGHT, KING, NO_PIECE};
 use types::bitboard::{lsb, more_than_one};
 use types::r#move::{Move, NORMAL};
-use types::score::{MAX_MOVES, MG, piece_value};
+use types::score::{Depth, MAX_MOVES, MG, piece_value};
 use crate::attacks::attack_bb::{between_bb};
 use crate::position::Position;
 use crate::movegen::{ExtMove, EVASIONS, NON_EVASIONS, CAPTURES, QUIETS, QUIET_CHECKS, generate};
@@ -99,9 +99,9 @@ pub struct MovePicker {
 /// is at the current node.
 
 impl MovePicker {
-    pub fn new(pos: &Position, ttm: Move, ply: usize, depth: i32, ss: &[search::Stack]) -> MovePicker {
+    pub fn new(pos: &Position, ttm: Move, ply: usize, depth: Depth, ss: &[search::Stack]) -> MovePicker {
         let mut stage = if pos.checkers() != 0 { Stage::EVASION_TT } else {
-            if depth > 0 {
+            if depth > Depth(0) {
                 Stage::MAIN_TT
             } else {
                 Stage::QSEARCH_TT

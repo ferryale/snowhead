@@ -1,5 +1,5 @@
 use crate::types::r#move::Move;
-use crate::types::score::{Value, mated_in, MAX_PLY, MAX_MOVES};
+use crate::types::score::{Depth, Value, mated_in, MAX_PLY, MAX_MOVES};
 use crate::movegen::ExtMove;
 use crate::position::Position;
 use crate::evaluate::evaluate;
@@ -144,22 +144,22 @@ impl Thread {
     //     }
     // }
 
-    pub fn search(&mut self, pos: &mut Position, depth: i32) {
+    pub fn search(&mut self, pos: &mut Position, depth: Depth) {
 
        
         let alpha = -Value::INFINITE;
         let beta = Value::INFINITE;
         let ply = 0;
 
-        for curr_depth in 1..depth+1 {
-            self.value = search(pos, ply, alpha, beta, curr_depth, self);
+        for curr_depth in 1..depth.0+1 {
+            self.value = search(pos, ply, alpha, beta, Depth(curr_depth), self);
             
             self.print_info();
 
             self.root_moves.sort();
             self.root_idx = 0;
 
-            if curr_depth < depth {
+            if curr_depth < depth.0 {
                 self.init_stacks();
             }
 
@@ -198,7 +198,7 @@ fn update_killers(ss: &mut [Stack], ply: usize, m: Move) {
 }
 
 
-fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: i32, thread: &mut Thread) -> Value {
+fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: Depth, thread: &mut Thread) -> Value {
 
     thread.ss[ply].node_count += 1;
 
@@ -207,22 +207,19 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         return Value::DRAW;
     }
 
-    if depth == 0 {
+    if depth == Depth(0) {
         //return evaluate(pos);
         thread.ss[ply].node_count -= 1;
-        return qsearch(pos, ply, alpha, beta, 0, thread);
+        return qsearch(pos, ply, alpha, beta, Depth(0), thread);
     }
 
-    // let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
-
-    // let num_moves = generate_legal(&pos, &mut list, 0);
     let mut mp = MovePicker::new(pos, Move::NONE, ply, depth, &mut thread.ss);
     let mut num_legal = 0;
     let root_node = ply == 0;
 
     loop {
 
-        let m = if root_node && depth > 1 {
+        let m = if root_node && depth > Depth(1) {
             thread.root_moves[thread.root_idx].m
             
         } else { 
@@ -280,7 +277,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
 }
 
-fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: i32, thread: &mut Thread) -> Value {
+fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: Depth, thread: &mut Thread) -> Value {
     thread.ss[ply].node_count += 1;
 
     // Checks for 50 rule count and repetition draw. Stalemate is handled later.

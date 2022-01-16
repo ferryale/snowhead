@@ -4,13 +4,21 @@ pub const MAX_MOVES: usize = 256;
 pub const MAX_PLY: i32 = 128;
 pub const MAX_MATE_PLY : i32 = 128;
 
-pub type Phase = i32;
+#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+pub struct Depth(pub i32);
 
-// #[derive(Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-// pub struct Depth(pub i32);
+impl std::ops::Mul<Depth> for i32 {
+    type Output = Depth;
+    fn mul(self, rhs: Depth) -> Depth { Depth(self * rhs.0) }
+}
 
-pub const PHASE_ENDGAME: Phase = 0;
-pub const PHASE_MIDGAME: Phase = 128;
+#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+pub struct Phase(pub u32);
+
+impl Phase {
+    pub const ENDGAME: Phase = Phase(0);
+    pub const MIDGAME: Phase = Phase(128);
+}
 
 pub const MG: usize = 0;
 pub const EG: usize = 1;

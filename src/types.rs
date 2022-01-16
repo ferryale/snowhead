@@ -9,7 +9,7 @@ use self::square::{Rank, File, Square, Direction};
 use self::piece::{Color, PieceType, Piece};
 use self::r#move::{Move, CastlingRight};
 use self::bitboard::Bitboard;
-use self::score::Value;
+use self::score::{Depth, Value};
 
 macro_rules! enable_base_operations_on {
 
@@ -319,10 +319,11 @@ enable_base_i32_operations_for_u32_on!(Rank);
 enable_base_i32_operations_for_u32_on!(CastlingRight);
 enable_base_i32_operations_for_i32_on!(Direction);
 
-
 enable_full_i32_operations_for_i32_on!(Value);
+enable_full_i32_operations_for_i32_on!(Depth);
+
 enable_full_operations_on!(Value);
-//enable_full_i32_operations_for_i32_on!(Depth);
+enable_full_operations_on!(Depth);
 
 enable_bit_operations_on!(CastlingRight);
 enable_bit_operations_on!(Bitboard);
