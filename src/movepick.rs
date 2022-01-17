@@ -3,7 +3,7 @@ use types::square::{RANK_2, RANK_8, relative_rank, pawn_push};
 use types::piece::{PAWN, KNIGHT, KING, NO_PIECE};
 use types::bitboard::{lsb, more_than_one};
 use types::r#move::{Move, NORMAL};
-use types::score::{Depth, MAX_MOVES, MG, piece_value};
+use types::score::{Depth, Value, MAX_MOVES, MG, piece_value};
 use crate::attacks::attack_bb::{between_bb};
 use crate::position::Position;
 use crate::movegen::{ExtMove, EVASIONS, NON_EVASIONS, CAPTURES, QUIETS, QUIET_CHECKS, generate};
@@ -40,22 +40,22 @@ types::enable_base_i32_operations_for_u32_on!(Stage);
 
 /// partial_insertion_sort() sorts moves in descending order up to and
 /// including a given limit.
-fn partial_insertion_sort(list: &mut [ExtMove], limit: i32) {
-    let mut sorted_end = 0;
-    for p in 1..list.len() {
-        if list[p].value >= limit {
-            let tmp = list[p];
-            sorted_end += 1;
-            list[p] = list[sorted_end];
-            let mut q = sorted_end;
-            while q > 0 && list[q-1].value < tmp.value {
-                list[q] = list[q - 1];
-                q -= 1;
-            }
-            list[q] = tmp;
-        }
-    }
-}
+// fn partial_insertion_sort(list: &mut [ExtMove], limit: Value) {
+//     let mut sorted_end = 0;
+//     for p in 1..list.len() {
+//         if list[p].value >= limit {
+//             let tmp = list[p];
+//             sorted_end += 1;
+//             list[p] = list[sorted_end];
+//             let mut q = sorted_end;
+//             while q > 0 && list[q-1].value < tmp.value {
+//                 list[q] = list[q - 1];
+//                 q -= 1;
+//             }
+//             list[q] = tmp;
+//         }
+//     }
+// }
 
 /// pick_best() finds the best move in the list and moves it to the front.
 /// Calling pick_best() is faster than sorting all the moves in advance if
@@ -121,7 +121,7 @@ impl MovePicker {
             killers: [ss[ply].killers[0], ss[ply].killers[1]],
             // depth: depth,
             // ply: ply,
-            list: [ExtMove {m: Move::NONE, value: 0}; MAX_MOVES as usize],
+            list: [ExtMove {m: Move::NONE, value: Value::ZERO}; MAX_MOVES as usize],
         }
     }
 
@@ -143,7 +143,7 @@ impl MovePicker {
                     let ext_move = self.pick_best();
                     if ext_move.m != self.tt_move {
                         // Good capture
-                        if ext_move.value > 0 {
+                        if ext_move.value > Value::ZERO {
                             return ext_move.m;
                         }
 
@@ -274,7 +274,7 @@ impl MovePicker {
         for ext_move in self.list[..self.end_moves].iter_mut() {
             let pc_from = pos.piece_on(ext_move.m.from());
             let pc_to = pos.piece_on(ext_move.m.to());
-            ext_move.value = piece_value(MG, pc_to).0 - piece_value(MG, pc_from).0;
+            ext_move.value = piece_value(MG, pc_to) - piece_value(MG, pc_from);
         }
 
     }
@@ -294,7 +294,7 @@ impl Position {
 
         // Use a slower but simpler function for uncommon cases
         if m.move_type() != NORMAL {
-            let mut list = [ExtMove {m: Move::NONE, value: 0}; MAX_MOVES as usize];
+            let mut list = [ExtMove {m: Move::NONE, value: Value::ZERO}; MAX_MOVES as usize];
             
             // Skip legality check of generate_legal
             let _num_moves = if self.checkers() != 0 {

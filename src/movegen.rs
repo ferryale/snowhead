@@ -7,6 +7,7 @@ use crate::types::bitboard::*;
 use crate::types::square::*;
 use crate::types::piece::*;
 use crate::types::r#move::*;
+use crate::types::score::Value;
 use crate::attacks::attack_bb::*;
 
 
@@ -25,7 +26,7 @@ pub const LEGAL: GenType = GenType(5);
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct ExtMove {
     pub m: Move,
-    pub value: i32,
+    pub value: Value,
 
 }
 
@@ -33,7 +34,7 @@ impl ExtMove {
     pub fn new() -> ExtMove {
         ExtMove {
             m: Move::NONE,
-            value: -300000
+            value: Value(-300000),
         }
     }
 }

@@ -4,7 +4,7 @@ use crate::search::Thread;
 use crate::perft::perft;
 
 use crate::types::r#move::Move;
-use crate::types::score::{Depth};
+use crate::types::score::{Depth, Value};
 
 
 use std;
@@ -135,7 +135,7 @@ pub fn cmd_loop() {
         match token {
             "ucinewgame" | "quit" | "stop" => {},
             "uci" => {
-                println!("id name Snowhead v0.1");
+                println!("id name Snowhead v0.1.0");
                 println!("uciok");
             }
             "go" => go(&mut pos, args),
@@ -161,7 +161,7 @@ impl Move {
         if s.len() == 5 {
         }
 
-        let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
+        let mut list = [ExtMove {m: Move::NONE, value: Value::ZERO}; 200];
 
         let _num_moves = generate_legal(&pos, &mut list, 0);
 

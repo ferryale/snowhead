@@ -1,8 +1,8 @@
 use super::{attacks_bb};
 use crate::attacks::{sliding_attacks};
 use crate::types::square::Square;
-use crate::types::piece::*;
-use crate::types::bitboard::{EMPTY_BB, pretty};
+use crate::types::piece::{ROOK, BISHOP};
+use crate::types::bitboard::{EMPTY_BB};
 
 #[test]
 fn magic_attacks_match_sliding_attacks() {

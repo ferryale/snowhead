@@ -1,11 +1,8 @@
-// use super::{attacks_bb};
-use crate::position::*;
-// use crate::attacks::{sliding_attacks};
-use crate::types::square::Square;
-use crate::types::r#move::*;
-// use crate::types::piece::*;
-// use crate::types::bitboard::{EMPTY_BB, pretty};
-use super::*;
+use crate::position::Position;
+use crate::types::r#move::{Move, EN_PASSANT, CASTLING};
+use crate::types::piece::*;
+use crate::types::score::{Value, MAX_MOVES};
+use super::{ExtMove, generate_legal};
 
 
 
@@ -119,9 +116,7 @@ impl Stats {
 
 fn is_capture(pos: &Position, m: Move) -> bool {
 
-    let from = m.from();
     let to = m.to();
-    let pc = pos.piece_on(from);
     let captured = if m.move_type() == EN_PASSANT {
         Piece::make(!pos.side_to_move(), PAWN)
     } else {
@@ -134,13 +129,13 @@ fn is_capture(pos: &Position, m: Move) -> bool {
 
 fn perft_stats(pos: &mut Position, depth: u32, stats: &mut Stats) {
 
-    let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
+    let mut list = [ExtMove {m: Move::NONE, value: Value::ZERO}; MAX_MOVES];
 
     if depth == 0 {
         return ();
     }
 
-    let mut num_moves = generate_legal(&pos, &mut list, 0);
+    let _num_moves = generate_legal(&pos, &mut list, 0);
    
     for ext_move in list{
     

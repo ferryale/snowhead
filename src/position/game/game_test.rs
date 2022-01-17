@@ -1,11 +1,7 @@
-// use super::{attacks_bb};
-use crate::position::*;
-// use crate::attacks::{sliding_attacks};
+use crate::position::Position;
 use crate::types::square::Square;
-use crate::types::r#move::*;
-// use crate::types::piece::*;
-// use crate::types::bitboard::{EMPTY_BB, pretty};
-use super::*;
+use crate::types::r#move::Move;
+
 
 #[test]
 fn do_undo_move_gives_same_position() {
@@ -22,14 +18,14 @@ fn do_undo_move_gives_same_position() {
     let fens = [start_fen, check_fen, ep_fen, oo_fen];
     let moves = [start_move, check_move, ep_move, oo_move];
     let mut pos = Position::new();
-    let mut prev_pos = Position::new();
+    let mut prev_pos;// = Position::new();
     //println!("{:?}", pos.zobrist);
 
     for idx in 0..4 {
         let m = moves[idx];
         let fen = fens[idx];
         pos.set(fen, false);
-        let prev_pos = pos.clone();
+        prev_pos = pos.clone();
         pos.do_move(m);
         pos.undo_move(m);
         assert_eq!(prev_pos, pos);

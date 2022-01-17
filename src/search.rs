@@ -15,7 +15,16 @@ pub struct Stack {
 
 
 impl Stack {
-    pub fn new(ply: usize) -> Stack {
+    // pub fn new(ply: usize) -> Stack {
+    //     Stack {
+    //         // ply: ply,
+    //         pv: [Move::NONE; MAX_PLY as usize],
+    //         killers: [Move::NONE; 2],
+    //         node_count: 0
+    //     }
+    // }
+
+    pub fn new() -> Stack {
         Stack {
             // ply: ply,
             pv: [Move::NONE; MAX_PLY as usize],
@@ -37,7 +46,7 @@ impl Thread {
     pub fn new() -> Thread {
 
         let mut thread = Thread {
-            ss: [Stack::new(0); MAX_PLY as usize],
+            ss: [Stack::new(); MAX_PLY as usize],
             value: Value(0),
             root_moves: [ExtMove::new(); MAX_MOVES],
             root_idx: 0,
@@ -132,7 +141,7 @@ impl Thread {
     fn init_stacks(&mut self) {
 
         for ply in 0..MAX_PLY as usize {
-            self.ss[ply] = Stack::new(ply);
+            self.ss[ply] = Stack::new();
         }
 
     }
@@ -257,7 +266,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
         if root_node { 
             //println!("depth {}, move {}", depth, m.to_string(false));
-            thread.root_moves[thread.root_idx] = ExtMove { m: m, value: value.0};
+            thread.root_moves[thread.root_idx] = ExtMove { m: m, value: value};
             thread.root_idx += 1; 
         }
 

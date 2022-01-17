@@ -1,15 +1,15 @@
 use crate::types::r#move::Move;
-use crate::types::score::{Depth, MAX_MOVES};
+use crate::types::score::{Depth, Value, MAX_MOVES};
 use crate::position::Position;
 use crate::movegen::{ExtMove, generate_legal};
 
 
 pub fn perft<const ROOT: bool>(pos: &mut Position, depth: Depth) -> usize {
 
-    let mut list = [ExtMove {m: Move::NONE, value: 0}; MAX_MOVES];
+    let mut list = [ExtMove {m: Move::NONE, value: Value(0)}; MAX_MOVES];
 
     let leaf = depth == Depth(2);
-    let mut cnt = 0;
+    let mut cnt;// = 0;
     let mut nodes = 0;
     if ROOT {
         println!("Starting perft{} on position {}", depth.0, pos.fen());
