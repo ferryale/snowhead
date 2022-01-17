@@ -10,3 +10,4 @@ pub mod search;
 pub mod evaluate;
 pub mod uci;
 pub mod movepick;
+pub mod tt;

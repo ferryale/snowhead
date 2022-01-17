@@ -1,19 +1,49 @@
 // use snowhead::types::square::*;
 // use snowhead::types::piece::*;
 // use snowhead::types::bitboard::*;
-// use snowhead::types::r#move::Move;
+use snowhead::types::r#move::Move;
+use snowhead::types::score::Value;
 // // use snowhead::zobrist::*;
 // use snowhead::position::{Position};
 // use snowhead::movegen::{ExtMove, generate_legal};
 // use snowhead::movepick::*;
 // use snowhead::psqt::*;
 // use snowhead::search::*;
-use snowhead::uci;
-
+//use snowhead::uci;
+use snowhead::tt::*;
+use std::mem;
 
 fn main() {
 
-    uci::cmd_loop();
+     //uci::cmd_loop();
+    let flag = TTFlag::EXACT;
+    println!("{:?}", flag==TTFlag::EXACT);
+    println!("{:?}", mem::size_of::<TTFlag>());
+    println!("{:?}", mem::size_of::<u16>());
+    println!("{:?}", mem::size_of::<TTEntry>());
+
+    let m = Move(3421);
+
+    let m16 = m.0 as u16;
+
+    let new_m = Move(m16 as u32);
+
+    assert_eq!(m, new_m);
+
+    let v = Value(3421);
+
+    let v16 = v.0 as i16;
+
+    let new_v = Value(v16 as i32);
+
+    assert_eq!(v, new_v);
+
+
+    
+    
+}
+
+   
 
     // println!("{:?}", PSQ);
     // //println!("{:?}", Square::A1);
@@ -177,6 +207,5 @@ fn main() {
 
     // //println!("{:?} {:?} {:?} {:?}", thread.ss[0], thread.ss[1], thread.ss[2], thread.ss[3]);
 
-}
 
 
