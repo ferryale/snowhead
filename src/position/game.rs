@@ -274,6 +274,41 @@ impl Position {
 
     }
 
+    // do(undo)_null_move() is used to do(undo) a "null move": it flips the
+    // side to move without executing any move on the board.
+
+    pub fn do_null_move(&mut self) {
+        debug_assert!(self.checkers() == 0);
+
+        let st_copy = (*self.st()).clone(); // full copy
+        self.states.push(st_copy);
+
+        if self.st().ep_square != Square::NONE {
+            let tmp = self.zobrist.en_passant[self.st().ep_square.file()];
+            self.st_mut().key ^= tmp;
+            self.st_mut().ep_square = Square::NONE;
+        }
+
+        self.st_mut().key ^= self.zobrist.side;
+
+        self.st_mut().rule50 += 1;
+        self.st_mut().plies_from_null = 0;
+
+        self.side_to_move = !self.side_to_move;
+
+        self.set_check_info();
+
+        debug_assert!(self.is_ok());
+    }
+
+    pub fn undo_null_move(&mut self) {
+        debug_assert!(self.checkers() == 0);
+
+        let new_len = self.states.len() - 1;
+        self.states.truncate(new_len);
+        self.side_to_move = !self.side_to_move;
+    }
+
     /// Position::is_ok() performs some consistency checks for the
     /// position object and raises an asserts if something wrong is detected.
     /// This is meant to be helpful when debugging.
