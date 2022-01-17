@@ -9,6 +9,39 @@ use crate::movepick::MovePicker;
 use crate::tt::{TranspositionTable, TTFlag};
 
 #[derive(Debug, Clone, Copy)]
+pub struct RootMoves {
+    ext_moves: [ExtMove; MAX_MOVES],
+    cur: usize,
+}
+
+impl RootMoves {
+    pub fn new() -> RootMoves {
+        RootMoves {
+            ext_moves: [ExtMove::new(); MAX_MOVES],
+            cur: 0,
+        }
+        
+    }
+
+    pub fn sort(&mut self) {
+        self.ext_moves.sort();
+        self.cur = 0;
+    }
+
+    pub fn next_move(&mut self) -> Move {
+        let next_move = self.ext_moves[self.cur].m;
+        self.cur += 1;
+        next_move
+    }
+
+    pub fn push(&mut self, ext_move: ExtMove) {
+        self.ext_moves[self.cur] = ext_move;
+        self.cur += 1;
+    } 
+}
+
+
+#[derive(Debug, Clone, Copy)]
 pub struct Stack {
     // ply: usize,
     pv: [Move; MAX_PLY as usize],
@@ -18,18 +51,8 @@ pub struct Stack {
 
 
 impl Stack {
-    // pub fn new(ply: usize) -> Stack {
-    //     Stack {
-    //         // ply: ply,
-    //         pv: [Move::NONE; MAX_PLY as usize],
-    //         killers: [Move::NONE; 2],
-    //         node_count: 0
-    //     }
-    // }
-
     pub fn new() -> Stack {
         Stack {
-            // ply: ply,
             pv: [Move::NONE; MAX_PLY as usize],
             killers: [Move::NONE; 2],
             node_count: 0
@@ -48,8 +71,7 @@ pub const HISTORY_ZERO: History = [[Value(0); SQUARE_NB]; PIECE_NB];
 pub struct Thread {
     pub ss: [Stack; MAX_PLY as usize],
     pub value: Value,
-    root_moves: [ExtMove; MAX_MOVES],
-    root_idx: usize,
+    root_moves: RootMoves,
     ttable: TranspositionTable,
     history: History
 }
@@ -60,8 +82,7 @@ impl Thread {
         let mut thread = Thread {
             ss: [Stack::new(); MAX_PLY as usize],
             value: Value(0),
-            root_moves: [ExtMove::new(); MAX_MOVES],
-            root_idx: 0,
+            root_moves: RootMoves::new(),
             ttable: TranspositionTable::new(tt_size_mb),
             history: HISTORY_ZERO
         };
@@ -186,7 +207,6 @@ impl Thread {
             self.print_info();
 
             self.root_moves.sort();
-            self.root_idx = 0;
 
             self.clear_history();
 
@@ -233,6 +253,9 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
     thread.ss[ply].node_count += 1;
 
+    let mut num_legal = 0;
+    let root_node = ply == 0;
+
     let mut value;
 
     let (tt_hit, tt_value, tt_flag, tt_depth, tt_move) = thread.ttable.probe(pos.key());
@@ -243,7 +266,6 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
             return beta;
         }
         if tt_flag == TTFlag::EXACT {
-            //update_pv(&mut thread.ss, ply, tt_move);
             return tt_value;
         }
         if tt_flag == TTFlag::UPPER && tt_value <= alpha {
@@ -256,13 +278,10 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         return Value::DRAW;
     }
 
+    // For depth <=0 go in quiescent search
     if depth <= Depth(0) {
-        //return evaluate(pos);
         thread.ss[ply].node_count -= 1;
         return qsearch(pos, ply, alpha, beta, Depth(0), thread);
-        // value = qsearch(pos, ply, alpha, beta, Depth(0), thread);
-        // thread.ttable.save(pos.key(), value, TTFlag::EXACT, depth, Move::NONE);
-        // return value;
     }
 
     // Null move pruning
@@ -275,16 +294,17 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         }
     }
     
+    // Init movepicker
     let mut mp = MovePicker::new(pos, tt_move, ply, depth, &mut thread.ss, thread.history);
-    let mut num_legal = 0;
-    let root_node = ply == 0;
 
     loop {
 
+
         let m = if root_node && depth > Depth(1) {
-            thread.root_moves[thread.root_idx].m
-            
+            // At a root_node, get the next move from root_moves, sorted based on previous iteration
+            thread.root_moves.next_move()
         } else { 
+            // At a non root_node, het the next_move from the movepicker.
             mp.next_move(pos, false)
         };
 
@@ -297,7 +317,6 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         value =  -search(pos, ply+1, -beta, -alpha, depth-1, thread);
 
         pos.undo_move(m);
-
 
         if value >= beta { // Fail high.
             // Update TT
@@ -315,6 +334,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
             return beta;
         }
+
         if value > alpha { // New PV move
             alpha = value;
             thread.ttable.save(pos.key(), value, TTFlag::EXACT, depth, m);
@@ -324,12 +344,11 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         }
 
         if root_node { 
-            //println!("depth {}, move {}", depth, m.to_string(false));
-            thread.root_moves[thread.root_idx] = ExtMove { m: m, value: value};
-            thread.root_idx += 1; 
+            thread.root_moves.push(ExtMove{m: m, value: alpha});
         }
 
     }
+
 
     // If there are no legal moves at this point, it is either checkmate or stalemate
     if num_legal == 0 {
