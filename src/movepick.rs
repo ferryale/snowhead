@@ -107,8 +107,14 @@ impl MovePicker {
                 Stage::QSEARCH_TT
             }
         };
+
+        let tt_move = if pos.pseudo_legal(ttm) {
+            ttm
+        } else {
+            Move::NONE
+        };
         
-        if ttm == Move::NONE {
+        if tt_move == Move::NONE {
             stage += 1;
         }
 
@@ -117,7 +123,7 @@ impl MovePicker {
             end_moves: 0,
             end_bad_captures: 0,
             stage: stage,
-            tt_move: ttm,
+            tt_move: tt_move,
             killers: [ss[ply].killers[0], ss[ply].killers[1]],
             // depth: depth,
             // ply: ply,

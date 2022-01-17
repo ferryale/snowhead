@@ -4,6 +4,7 @@ use crate::movegen::ExtMove;
 use crate::position::Position;
 use crate::evaluate::evaluate;
 use crate::movepick::MovePicker;
+use crate::tt::{TranspositionTable, TTFlag};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Stack {
@@ -34,22 +35,28 @@ impl Stack {
     }
 }
 
+// Rust won't let you own a mut reference to the ttable.
+// Just own the ttable for now.
+// TODO: figure how how to handle a mut reference to ttable in multi-threading.
+// The table needs to be shared by multiple threads.
 #[derive(Debug, Clone)]
 pub struct Thread {
     pub ss: [Stack; MAX_PLY as usize],
     pub value: Value,
     root_moves: [ExtMove; MAX_MOVES],
     root_idx: usize,
+    ttable: TranspositionTable
 }
 
 impl Thread {
-    pub fn new() -> Thread {
+    pub fn new(ttable: TranspositionTable) -> Thread {
 
         let mut thread = Thread {
             ss: [Stack::new(); MAX_PLY as usize],
             value: Value(0),
             root_moves: [ExtMove::new(); MAX_MOVES],
             root_idx: 0,
+            ttable: ttable
         };
 
         thread.init_stacks();
@@ -222,7 +229,9 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         return qsearch(pos, ply, alpha, beta, Depth(0), thread);
     }
 
-    let mut mp = MovePicker::new(pos, Move::NONE, ply, depth, &mut thread.ss);
+    let (tt_hit, tt_value, tt_flag, tt_depth, tt_move) = thread.ttable.probe(pos.key());
+
+    let mut mp = MovePicker::new(pos, tt_move, ply, depth, &mut thread.ss);
     let mut num_legal = 0;
     let root_node = ply == 0;
 
@@ -235,6 +244,8 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
             mp.next_move(pos, false)
         };
 
+        // let m = mp.next_move(pos, false);
+
         // if root_node { 
         //     println!("depth {}, move {}", depth, m.to_string(false));
         // }
@@ -245,9 +256,16 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         if !pos.legal(m) { continue; }
         num_legal += 1;
 
-        pos.do_move(m);
+        
 
-        let value = -search(pos, ply+1, -beta, -alpha, depth-1, thread);
+        pos.do_move(m);
+        let (tt_hit, tt_value, tt_flag, tt_depth, tt_move) = thread.ttable.probe(pos.key());
+
+        let value = if true {
+            -search(pos, ply+1, -beta, -alpha, depth-1, thread)
+        } else {
+            tt_value
+        };
 
         pos.undo_move(m);
 
@@ -256,12 +274,16 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
             
             // Store move as killer.
             // No need to check if it is a capture because movepicker already does it.
+            thread.ttable.save(pos.key(), beta, TTFlag::LOWER, depth, m);
             update_killers(&mut thread.ss, ply, m); 
             return beta;
         }
-        if value > alpha {
+        if value > alpha { // New PV move
             alpha = value;
+            thread.ttable.save(pos.key(), value, TTFlag::EXACT, depth, m);
             update_pv(&mut thread.ss, ply, m);
+        } else { // fail low
+            //thread.ttable.save(pos.key(), alpha, TTFlag::UPPER, m);
         }
 
         if root_node { 

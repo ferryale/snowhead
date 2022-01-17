@@ -15,7 +15,7 @@ use snowhead::uci;
 
 fn main() {
 
-     uci::cmd_loop();
+    uci::cmd_loop();
     // let flag = TTFlag::EXACT;
     // println!("{:?}", flag==TTFlag::EXACT);
     // println!("{:?}", mem::size_of::<TTFlag>());
