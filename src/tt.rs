@@ -1,7 +1,7 @@
 use std::mem;
 
 use crate::zobrist::Key;
-use crate::types::score::Value;
+use crate::types::score::{Value, Depth};
 use crate::types::r#move::Move;
 
 const MAX_TT_SIZE_MB: usize = 1024;
@@ -21,10 +21,12 @@ pub struct TTEntry{
     key16: u16,
     value16: i16,
     flag: TTFlag,
+    depth8: i8,
     move16: u16,
     
 }
 
+#[derive(Debug, Clone)]
 pub struct TranspositionTable {
     table: Vec<TTEntry>
 }
@@ -38,20 +40,20 @@ impl TranspositionTable {
         
     }
 
-    pub fn save(&mut self, key: Key, value: Value, flag: TTFlag, m: Move) {
+    pub fn save(&mut self, key: Key, value: Value, flag: TTFlag, depth: Depth, m: Move) {
         let idx = self.idx(key);
-        self.table[idx] = TTEntry::new(key, value, flag, m);
+        self.table[idx] = TTEntry::new(key, value, flag, depth, m);
     }
 
-    pub fn probe(&mut self, key: Key) -> (bool, Value, TTFlag, Move) {
+    pub fn probe(&mut self, key: Key) -> (bool, Value, TTFlag, Depth, Move) {
         
         let idx = self.idx(key);
         let tte = self.table[idx];
         let tt_hit = tte.flag != TTFlag::NONE;
         if tt_hit {
-            return (true, tte.get_value(), tte.get_flag(), tte.get_move());
+            return (true, tte.get_value(), tte.get_flag(), tte.get_depth(), tte.get_move());
         }
-        (false, Value::ZERO, TTFlag::NONE, Move::NONE)
+        (false, Value::ZERO, TTFlag::NONE, Depth(0), Move::NONE)
     }
 
     pub fn len(&self) -> usize {
@@ -96,12 +98,13 @@ impl TranspositionTable {
 
 impl TTEntry {
     
-    pub fn new(key: Key, value: Value, flag: TTFlag, m: Move) -> TTEntry {
+    pub fn new(key: Key, value: Value, flag: TTFlag, depth: Depth, m: Move) -> TTEntry {
         
         TTEntry {
             key16: key as u16, 
             value16: value.0 as i16, 
             flag: flag, 
+            depth8: depth.0 as i8,
             move16: m.0 as u16
         }
         
@@ -113,6 +116,10 @@ impl TTEntry {
 
     pub fn get_flag(&self) -> TTFlag {
         self.flag
+    }
+
+    pub fn get_depth(&self) -> Depth {
+        Depth(self.depth8 as i32)
     }
 
     pub fn get_move(&self) -> Move {
@@ -128,6 +135,7 @@ impl Default for TTEntry {
             key16: 0u16,
             value16: 0i16,
             flag: TTFlag::NONE,
+            depth8: 0i8,
             move16: 0u16
         }
 
@@ -231,8 +239,8 @@ mod tt_test {
         for fen in &test_fens {
             pos.set(fen, false);
             value = evaluate(&pos);
-            ttable.save(pos.key(), value, TTFlag::EXACT, Move::NONE);
-            let (_tt_hit, new_value, flag, _m) = ttable.probe(pos.key());
+            ttable.save(pos.key(), value, TTFlag::EXACT, Depth(0), Move::NONE);
+            let (_tt_hit, new_value, flag, _depth, _m) = ttable.probe(pos.key());
 
             assert_ne!(flag, TTFlag::NONE);
             assert_eq!(value, new_value);
