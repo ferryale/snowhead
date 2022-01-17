@@ -5,7 +5,7 @@ use crate::perft::perft;
 
 use crate::types::r#move::Move;
 use crate::types::score::{Depth, Value};
-use crate::tt::TranspositionTable;
+
 
 
 use std;
@@ -83,8 +83,8 @@ fn go(pos: &mut Position, args: &str) {
         let nodes = perft::<true>(pos, Depth(depth));
         println!("Total nodes seached: {}", nodes);
     } else {
-        let ttable = TranspositionTable::new(10);
-        let mut thread = Thread::new(ttable);
+        //let ttable = TranspositionTable::new(1000);
+        let mut thread = Thread::new(100);
         thread.search(pos, Depth(depth));
     }
 

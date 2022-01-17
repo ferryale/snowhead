@@ -49,14 +49,14 @@ pub struct Thread {
 }
 
 impl Thread {
-    pub fn new(ttable: TranspositionTable) -> Thread {
+    pub fn new(tt_size_mb: usize) -> Thread {
 
         let mut thread = Thread {
             ss: [Stack::new(); MAX_PLY as usize],
             value: Value(0),
             root_moves: [ExtMove::new(); MAX_MOVES],
             root_idx: 0,
-            ttable: ttable
+            ttable: TranspositionTable::new(tt_size_mb)
         };
 
         thread.init_stacks();
@@ -218,6 +218,24 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
     thread.ss[ply].node_count += 1;
 
+    let mut value;
+
+    let (tt_hit, tt_value, tt_flag, tt_depth, tt_move) = thread.ttable.probe(pos.key());
+
+    // If tt_hit return the move immediately
+    if tt_hit && tt_move != Move::NONE && tt_depth >= depth {
+        if tt_flag == TTFlag::LOWER && tt_value >= beta {
+            return beta;
+        }
+        if tt_flag == TTFlag::EXACT {
+            update_pv(&mut thread.ss, ply, tt_move);
+            return tt_value;
+        }
+        if tt_flag == TTFlag::UPPER && tt_value <= alpha {
+            return alpha;
+        }
+    }
+
     // Checks for 50 rule count and repetition draw. Stalemate is handled later.
     if pos.is_draw(ply as i32) {
         return Value::DRAW;
@@ -227,9 +245,10 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         //return evaluate(pos);
         thread.ss[ply].node_count -= 1;
         return qsearch(pos, ply, alpha, beta, Depth(0), thread);
+        // value = qsearch(pos, ply, alpha, beta, Depth(0), thread);
+        // thread.ttable.save(pos.key(), value, TTFlag::EXACT, depth, Move::NONE);
+        // return value;
     }
-
-    let (tt_hit, tt_value, tt_flag, tt_depth, tt_move) = thread.ttable.probe(pos.key());
 
     let mut mp = MovePicker::new(pos, tt_move, ply, depth, &mut thread.ss);
     let mut num_legal = 0;
@@ -244,34 +263,18 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
             mp.next_move(pos, false)
         };
 
-        // let m = mp.next_move(pos, false);
-
-        // if root_node { 
-        //     println!("depth {}, move {}", depth, m.to_string(false));
-        // }
-
-        
-
         if m == Move::NONE { break; }
         if !pos.legal(m) { continue; }
         num_legal += 1;
 
-        
-
         pos.do_move(m);
-        let (tt_hit, tt_value, tt_flag, tt_depth, tt_move) = thread.ttable.probe(pos.key());
-
-        let value = if true {
-            -search(pos, ply+1, -beta, -alpha, depth-1, thread)
-        } else {
-            tt_value
-        };
+        
+        value =  -search(pos, ply+1, -beta, -alpha, depth-1, thread);
 
         pos.undo_move(m);
 
 
         if value >= beta { // Fail high.
-            
             // Store move as killer.
             // No need to check if it is a capture because movepicker already does it.
             thread.ttable.save(pos.key(), beta, TTFlag::LOWER, depth, m);
@@ -283,7 +286,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
             thread.ttable.save(pos.key(), value, TTFlag::EXACT, depth, m);
             update_pv(&mut thread.ss, ply, m);
         } else { // fail low
-            //thread.ttable.save(pos.key(), alpha, TTFlag::UPPER, m);
+            thread.ttable.save(pos.key(), alpha, TTFlag::UPPER, depth, Move::NONE);
         }
 
         if root_node { 
