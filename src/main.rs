@@ -1,42 +1,59 @@
 // use snowhead::types::square::*;
 // use snowhead::types::piece::*;
 // use snowhead::types::bitboard::*;
-use snowhead::types::r#move::Move;
-use snowhead::types::score::Value;
-// // use snowhead::zobrist::*;
+// use snowhead::types::r#move::Move;
+// use snowhead::types::score::Value;
+// use snowhead::evaluate::evaluate;
 // use snowhead::position::{Position};
 // use snowhead::movegen::{ExtMove, generate_legal};
 // use snowhead::movepick::*;
 // use snowhead::psqt::*;
 // use snowhead::search::*;
-//use snowhead::uci;
-use snowhead::tt::*;
-use std::mem;
+use snowhead::uci;
+// use snowhead::tt::*;
+// use std::mem;
 
 fn main() {
 
-     //uci::cmd_loop();
-    let flag = TTFlag::EXACT;
-    println!("{:?}", flag==TTFlag::EXACT);
-    println!("{:?}", mem::size_of::<TTFlag>());
-    println!("{:?}", mem::size_of::<u16>());
-    println!("{:?}", mem::size_of::<TTEntry>());
+     uci::cmd_loop();
+    // let flag = TTFlag::EXACT;
+    // println!("{:?}", flag==TTFlag::EXACT);
+    // println!("{:?}", mem::size_of::<TTFlag>());
+    // println!("{:?}", mem::size_of::<u16>());
+    // println!("{:?}", mem::size_of::<TTEntry>());
 
-    let m = Move(3421);
+    // let m = Move(3421);
 
-    let m16 = m.0 as u16;
+    // let m16 = m.0 as u16;
 
-    let new_m = Move(m16 as u32);
+    // let new_m = Move(m16 as u32);
 
-    assert_eq!(m, new_m);
+    // assert_eq!(m, new_m);
 
-    let v = Value(3421);
+    // let v = Value(3421);
 
-    let v16 = v.0 as i16;
+    // let v16 = v.0 as i16;
 
-    let new_v = Value(v16 as i32);
+    // let new_v = Value(v16 as i32);
 
-    assert_eq!(v, new_v);
+    // assert_eq!(v, new_v);
+
+    // let mut pos = Position::new();
+
+    // pos.set("rnbqr3/ppppkppp/4pn2/8/1P1P4/2N1P3/1PP1NPPP/R1BQKB1R b KQ - 3 7", false);
+
+    // let value = evaluate(&pos);
+
+    // let mut ttable = TranspositionTable::new(10);
+
+    // println!("len={}, size_mb={}", ttable.len(), ttable.size_mb());
+
+    // ttable.save(pos.key(), value, TTFlag::EXACT, Move::NONE);
+
+    // let (tt_hit, new_value, flag, m) = ttable.probe(pos.key());
+
+    // assert_ne!(flag, TTFlag::NONE);
+    // assert_eq!(value, new_value);
 
 
     

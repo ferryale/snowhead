@@ -76,7 +76,7 @@ mod perft_test {
     fn perft_test_positions() {
 
         // Enable debug to run extra tests on John Merlino's test positions.
-        let debug = true;
+        let debug = false;
 
         // http://www.talkchess.com/forum3/viewtopic.php?t=59046
         // Martin Sedlak's test positions
