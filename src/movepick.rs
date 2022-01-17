@@ -38,8 +38,8 @@ impl Stage {
 types::enable_base_i32_operations_for_u32_on!(Stage);
 
 
-/// partial_insertion_sort() sorts moves in descending order up to and
-/// including a given limit.
+// // partial_insertion_sort() sorts moves in descending order up to and
+// // including a given limit.
 // fn partial_insertion_sort(list: &mut [ExtMove], limit: Value) {
 //     let mut sorted_end = 0;
 //     for p in 1..list.len() {
@@ -88,6 +88,7 @@ pub struct MovePicker {
     // ply: usize,
     tt_move: Move,
     killers: [Move; 2],
+    history: search::History,
     list: [ExtMove; MAX_MOVES as usize],
 }
 
@@ -99,7 +100,7 @@ pub struct MovePicker {
 /// is at the current node.
 
 impl MovePicker {
-    pub fn new(pos: &Position, ttm: Move, ply: usize, depth: Depth, ss: &[search::Stack]) -> MovePicker {
+    pub fn new(pos: &Position, ttm: Move, ply: usize, depth: Depth, ss: &[search::Stack], history: search::History) -> MovePicker {
         let mut stage = if pos.checkers() != 0 { Stage::EVASION_TT } else {
             if depth > Depth(0) {
                 Stage::MAIN_TT
@@ -125,7 +126,7 @@ impl MovePicker {
             stage: stage,
             tt_move: tt_move,
             killers: [ss[ply].killers[0], ss[ply].killers[1]],
-            // depth: depth,
+            history: history,
             // ply: ply,
             list: [ExtMove {m: Move::NONE, value: Value::ZERO}; MAX_MOVES as usize],
         }
@@ -191,8 +192,9 @@ impl MovePicker {
             Stage::QUIET_INIT => {
                 self.cur = self.end_bad_captures;
                 self.end_moves = generate(QUIETS, pos, &mut self.list, self.cur);
-                //score_quiets(pos, self);
-                //partial_insertion_sort(&mut self.list[self.cur..self.end_moves], -4000);
+                self.score_quiets(pos);
+                self.list[self.cur..self.end_moves].sort();
+                //partial_insertion_sort(&mut self.list[self.cur..self.end_moves], Value(-4000));
                 self.stage += 1;
             }
 
@@ -281,6 +283,16 @@ impl MovePicker {
             let pc_from = pos.piece_on(ext_move.m.from());
             let pc_to = pos.piece_on(ext_move.m.to());
             ext_move.value = piece_value(MG, pc_to) - piece_value(MG, pc_from);
+        }
+
+    }
+
+    fn score_quiets(&mut self, pos: &Position) {
+
+        for ext_move in self.list[self.cur..self.end_moves].iter_mut() {
+            let pc_from = pos.piece_on(ext_move.m.from());
+            let to = ext_move.m.to();
+            ext_move.value = self.history[pc_from][to];
         }
 
     }

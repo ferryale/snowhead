@@ -1,3 +1,5 @@
+use crate::types::square::{SQUARE_NB};
+use crate::types::piece::{PIECE_NB};
 use crate::types::r#move::Move;
 use crate::types::score::{Depth, Value, mated_in, MAX_PLY, MAX_MOVES};
 use crate::movegen::ExtMove;
@@ -35,6 +37,9 @@ impl Stack {
     }
 }
 
+pub type History = [[Value; SQUARE_NB]; PIECE_NB];
+pub const HISTORY_ZERO: History = [[Value(0); SQUARE_NB]; PIECE_NB];
+
 // Rust won't let you own a mut reference to the ttable.
 // Just own the ttable for now.
 // TODO: figure how how to handle a mut reference to ttable in multi-threading.
@@ -45,7 +50,8 @@ pub struct Thread {
     pub value: Value,
     root_moves: [ExtMove; MAX_MOVES],
     root_idx: usize,
-    ttable: TranspositionTable
+    ttable: TranspositionTable,
+    history: History
 }
 
 impl Thread {
@@ -56,7 +62,8 @@ impl Thread {
             value: Value(0),
             root_moves: [ExtMove::new(); MAX_MOVES],
             root_idx: 0,
-            ttable: TranspositionTable::new(tt_size_mb)
+            ttable: TranspositionTable::new(tt_size_mb),
+            history: HISTORY_ZERO
         };
 
         thread.init_stacks();
@@ -153,6 +160,12 @@ impl Thread {
 
     }
 
+    fn clear_history(&mut self) {
+
+       self.history = HISTORY_ZERO
+
+    }
+
     // fn sort_root_moves(&mut self) {
 
     //     for ext_move in self.root_moves.iter().enumerate() {
@@ -169,11 +182,13 @@ impl Thread {
 
         for curr_depth in 1..depth.0+1 {
             self.value = search(pos, ply, alpha, beta, Depth(curr_depth), self);
-            
+           
             self.print_info();
 
             self.root_moves.sort();
             self.root_idx = 0;
+
+            self.clear_history();
 
             if curr_depth < depth.0 {
                 self.init_stacks();
@@ -228,7 +243,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
             return beta;
         }
         if tt_flag == TTFlag::EXACT {
-            update_pv(&mut thread.ss, ply, tt_move);
+            //update_pv(&mut thread.ss, ply, tt_move);
             return tt_value;
         }
         if tt_flag == TTFlag::UPPER && tt_value <= alpha {
@@ -241,7 +256,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         return Value::DRAW;
     }
 
-    if depth == Depth(0) {
+    if depth <= Depth(0) {
         //return evaluate(pos);
         thread.ss[ply].node_count -= 1;
         return qsearch(pos, ply, alpha, beta, Depth(0), thread);
@@ -250,7 +265,17 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         // return value;
     }
 
-    let mut mp = MovePicker::new(pos, tt_move, ply, depth, &mut thread.ss);
+    // Null move pruning
+    if pos.checkers() == 0 {
+        pos.do_null_move();
+        value = -search(pos, ply+2, -beta, -beta + 1, depth - 3, thread);
+        pos.undo_null_move();
+        if value >= beta {
+            return beta;
+        }
+    }
+    
+    let mut mp = MovePicker::new(pos, tt_move, ply, depth, &mut thread.ss, thread.history);
     let mut num_legal = 0;
     let root_node = ply == 0;
 
@@ -275,10 +300,19 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
 
         if value >= beta { // Fail high.
-            // Store move as killer.
-            // No need to check if it is a capture because movepicker already does it.
+            // Update TT
             thread.ttable.save(pos.key(), beta, TTFlag::LOWER, depth, m);
-            update_killers(&mut thread.ss, ply, m); 
+
+            if !pos.capture(m) {
+
+                // Store move as killer. Even if movepick checks that the move in a non capture,
+                // we only update the killer when the move is a capture to avoid wasting killer slots.
+                update_killers(&mut thread.ss, ply, m);
+
+                // Update history
+                thread.history[pos.piece_on(m.from())][m.to()] += Value(depth.0 * depth.0);
+            }
+
             return beta;
         }
         if value > alpha { // New PV move
@@ -327,7 +361,7 @@ fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth:
         alpha = value;
     }
 
-    let mut mp = MovePicker::new(pos, Move::NONE, ply, depth, &mut thread.ss);
+    let mut mp = MovePicker::new(pos, Move::NONE, ply, depth, &mut thread.ss, thread.history);
     let mut num_moves = 0;
 
     // let mut list = [ExtMove {m: Move::NONE, value: 0}; 200];
