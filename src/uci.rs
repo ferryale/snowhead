@@ -1,3 +1,5 @@
+use crate::types::piece::{WHITE, BLACK};
+use crate::uciset::{UCILimits};
 use crate::movegen::{ExtMove, generate_legal};
 use crate::position::Position;
 use crate::search::Thread;
@@ -65,27 +67,40 @@ fn position(pos: &mut Position, args: &str) {
 
 fn go(pos: &mut Position, args: &str) {
 
-    let mut do_perft = false;
-    let mut depth = 0;
     let mut iter = args.split_whitespace();
+
+    let mut limits = UCILimits::new(); // This starts the time
     while let Some(token) = iter.next() {
         match token {
-            "depth" => depth = iter.next().unwrap().parse().unwrap(),
-            "perft" => { 
-                depth = iter.next().unwrap().parse().unwrap();
-                do_perft = true;
-            },
+            "wtime" => limits.time[WHITE] =
+                iter.next().unwrap().parse().unwrap(),
+            "btime" => limits.time[BLACK] =
+                iter.next().unwrap().parse().unwrap(),
+            "winc" => limits.inc[WHITE] =
+                iter.next().unwrap().parse().unwrap(),
+            "binc" => limits.inc[BLACK] =
+                iter.next().unwrap().parse().unwrap(),
+            "movestogo" => limits.movestogo =
+                iter.next().unwrap().parse().unwrap(),
+            "depth" => limits.depth = iter.next().unwrap().parse().unwrap(),
+            "nodes" => limits.nodes = iter.next().unwrap().parse().unwrap(),
+            "movetime" => limits.movetime =
+                iter.next().unwrap().parse().unwrap(),
+            "mate" => limits.mate = iter.next().unwrap().parse().unwrap(),
+            "perft" => limits.perft = iter.next().unwrap().parse().unwrap(),
+            "infinite" => limits.infinite = true,
+            "ponder" => {},
             _ => {}
         }
     }
 
-    if do_perft {
-        let nodes = perft::<true>(pos, Depth(depth));
+    if limits.perft > 0 {
+        let nodes = perft::<true>(pos, Depth(limits.perft as i32));
         println!("Total nodes seached: {}", nodes);
     } else {
         //let ttable = TranspositionTable::new(1000);
-        let mut thread = Thread::new(100);
-        thread.search(pos, Depth(depth));
+        let mut thread = Thread::new(128, limits, pos.side_to_move(), pos.game_ply());
+        thread.search(pos);
     }
 
     

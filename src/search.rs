@@ -1,5 +1,5 @@
 use crate::types::square::{SQUARE_NB};
-use crate::types::piece::{PIECE_NB};
+use crate::types::piece::{WHITE, BLACK, PIECE_NB, Color};
 use crate::types::r#move::Move;
 use crate::types::score::{Depth, Value, mated_in, MAX_PLY, MAX_MOVES};
 use crate::movegen::ExtMove;
@@ -7,6 +7,8 @@ use crate::position::Position;
 use crate::evaluate::evaluate;
 use crate::movepick::MovePicker;
 use crate::tt::{TranspositionTable, TTFlag};
+use crate::uciset::{UCILimits};
+use crate::timeman::{TimeManager};
 
 #[derive(Debug, Clone, Copy)]
 pub struct RootMoves {
@@ -79,18 +81,24 @@ pub struct Thread {
     pub value: Value,
     root_moves: RootMoves,
     ttable: TranspositionTable,
-    history: History
+    history: History,
+    limits: UCILimits,
+    time: TimeManager,
+    iter_time: i64,
 }
 
 impl Thread {
-    pub fn new(tt_size_mb: usize) -> Thread {
+    pub fn new(tt_size_mb: usize, limits: UCILimits, us: Color, ply: i32) -> Thread {
 
         let mut thread = Thread {
             ss: [Stack::new(); MAX_PLY as usize],
             value: Value(0),
             root_moves: RootMoves::new(),
             ttable: TranspositionTable::new(tt_size_mb),
-            history: HISTORY_ZERO
+            history: HISTORY_ZERO,
+            limits: limits,
+            time: TimeManager::new(&limits, us, ply),
+            iter_time: 0i64,
         };
 
         thread.init_stacks();
@@ -152,6 +160,28 @@ impl Thread {
         self.value.0
     }
 
+    pub fn time(&self) -> i64 {
+        self.time.elapsed()
+    }
+
+    pub fn nps(&self) -> u32 {
+        let iter_time = std::cmp::max(1, self.iter_time);
+         (self.nodes() as f32 / iter_time as f32 * 1000.0) as u32
+
+    }
+
+    // fn branching_factor(&self) -> f32 {
+    //     let num_root = (self.root_moves.cur + 1) as f32;
+    //     let num_nodes = self.nodes() as f32;
+    //     num_root.ln()/num_nodes.ln()
+    // }
+
+    // fn branching_factor(&self) -> f32 {
+    //     let num_root = (self.root_moves.cur + 1) as f32;
+    //     let num_nodes = self.nodes() as f32;
+    //     num_root.ln()/num_nodes.ln()
+    // }
+
     // pub fn score(&self) {
     //     self.root_moves
         
@@ -159,8 +189,9 @@ impl Thread {
 
     pub fn info(&self) -> String {
 
-        format!("depth {} seldepth {} nodes {} score cp {} pv{}", 
-            self.depth(), self.seldepth(), self.nodes(), self.score_cp(), self.pv_string())
+        format!("depth {} seldepth {} time {} nodes {} score cp {} nps {} pv{}", 
+            self.depth(), self.seldepth(), self.time(), self.nodes(), self.score_cp(),
+            self.nps(), self.pv_string())
         
     }
 
@@ -208,33 +239,65 @@ impl Thread {
     //     }
     // }
 
-    pub fn search(&mut self, pos: &mut Position, depth: Depth) {
+    pub fn search(&mut self, pos: &mut Position) {
 
        
         let alpha = -Value::INFINITE;
         let beta = Value::INFINITE;
         let ply = 0;
+        let mut prev_nodes = 1;
+        let mut next_time = 0;
+        let mut prev_time = 0;
+        let mut elapsed;
+        let mut ebf;
+        let mut nps;
 
-        for curr_depth in 1..depth.0+1 {
-            self.value = search(pos, ply, alpha, beta, Depth(curr_depth), self);
-           
-            self.print_info();
+        let max_depth = if self.limits.infinite || self.limits.use_time_management() {
+            MAX_PLY
+        } else {
+            self.limits.depth as i32
+        };
+        
+        let mut curr_depth = 1;
+        println!("{} {}", self.time.optimum(), self.limits.use_time_management());
+        while (curr_depth <= max_depth && !self.limits.use_time_management()) || 
+        (self.limits.use_time_management() && next_time < self.time.optimum() || curr_depth < 5) {
             
+            self.clear_history();
+            self.init_stacks();
+
+            self.value = search(pos, ply, alpha, beta, Depth(curr_depth), self);
+
+            self.print_info();
 
             self.root_moves.sort();
-            // self.print_root_moves();
-            // self.root_moves.sort();
+
             
 
-            self.clear_history();
+            // Can we do another iteration?
+            elapsed = self.time();
+            self.iter_time = elapsed - prev_time;
+            nps = std::cmp::min(self.nps(), 100_000);
 
-            if curr_depth < depth.0 {
-                self.init_stacks();
-            }
+            ebf = self.nodes() as f32 / prev_nodes as f32;
+            // next_nodes = self.nodes() as f32 * ebf;
+
+            // next_time = elapsed + (next_nodes as f32 / nps as f32 * 1000.0) as i64;
+            next_time = elapsed + (self.iter_time as f32 * ebf) as i64;
+
+            // println!("ebf {} next_nodes {} next_time {} nodes {} prev_nodes {} iter time {}\n", ebf, next_nodes, next_time,
+            //     self.nodes(), prev_nodes, self.iter_time);
+
+            prev_nodes = self.nodes();
+            
+            prev_time = elapsed;
+
+            curr_depth += 1;
 
         }
 
         self.print_best_move();
+        
 
     }
 }
