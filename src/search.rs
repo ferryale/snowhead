@@ -272,7 +272,10 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
     thread.ss[ply].node_count += 1;
 
     let mut num_legal = 0;
+    let mut num_played = 0;
+    let mut red = 0;
     let root_node = ply == 0;
+    let pv_node = beta - alpha > Value(1);
 
     let mut value;
 
@@ -332,10 +335,27 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         if !pos.legal(m) { continue; }
         num_legal += 1;
 
-        pos.do_move(m);
-        
-        value =  -search(pos, ply+1, -beta, -alpha, depth-1, thread);
+        // TODO: Add some pruning here
 
+        pos.do_move(m);
+
+        num_played += 1;
+
+        // PVS, first node of PV line with full window, other nodes with null-window.
+        if pv_node && num_played == 1 {
+            value =  -search(pos, ply+1, -beta, -alpha, depth-1, thread);
+        } else {
+            red = 2;
+            value =  -search(pos, ply+1, -alpha-1, -alpha, depth-1-red, thread);
+            if value > alpha && red > 0 {
+                value =  -search(pos, ply+1, -alpha-1, -alpha, depth-1, thread);
+            }
+            if value > alpha && (root_node || value < beta) {
+                value =  -search(pos, ply+1, -beta, -alpha, depth-1, thread);
+            }
+
+        }
+        
         pos.undo_move(m);
 
         if value >= beta { // Fail high.
