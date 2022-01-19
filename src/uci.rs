@@ -4,6 +4,7 @@ use crate::movegen::{ExtMove, generate_legal};
 use crate::position::Position;
 use crate::search::Thread;
 use crate::perft::perft;
+use crate::tt::{TranspositionTable, TTFlag};
 
 use crate::types::r#move::Move;
 use crate::types::score::{Depth, Value};
@@ -65,7 +66,7 @@ fn position(pos: &mut Position, args: &str) {
 // sets the thinking time and other parameters from the input string, then
 // starts the search.
 
-fn go(pos: &mut Position, args: &str) {
+fn go(pos: &mut Position, args: &str, ttable: TranspositionTable) {
 
     let mut iter = args.split_whitespace();
 
@@ -99,7 +100,7 @@ fn go(pos: &mut Position, args: &str) {
         println!("Total nodes seached: {}", nodes);
     } else {
         //let ttable = TranspositionTable::new(1000);
-        let mut thread = Thread::new(128, limits, pos.side_to_move(), pos.game_ply());
+        let mut thread = Thread::new(ttable, limits, pos.side_to_move(), pos.game_ply());
         thread.search(pos);
     }
 
@@ -149,13 +150,15 @@ pub fn cmd_loop() {
         // threads::stop_on_ponderhit() is true, we are waiting for
         // 'ponderhit' to stop the search, for instance if max search depth
         // has been reached.
+        let mut ttable = TranspositionTable::new(8);
         match token {
-            "ucinewgame" | "quit" | "stop" => {},
+            "quit" | "stop" => {},
+            "ucinewgame" => { ttable = TranspositionTable::new(8) }
             "uci" => {
                 println!("id name Snowhead v0.1.0");
                 println!("uciok");
             }
-            "go" => go(&mut pos, args),
+            "go" => go(&mut pos, args, ttable),
             "position" =>
                 position(&mut pos, args),
             

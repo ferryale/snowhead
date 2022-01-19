@@ -88,13 +88,14 @@ pub struct Thread {
 }
 
 impl Thread {
-    pub fn new(tt_size_mb: usize, limits: UCILimits, us: Color, ply: i32) -> Thread {
+    //pub fn new(tt_size_mb: usize, limits: UCILimits, us: Color, ply: i32) -> Thread {
+    pub fn new(ttable: TranspositionTable, limits: UCILimits, us: Color, ply: i32) -> Thread {
 
         let mut thread = Thread {
             ss: [Stack::new(); MAX_PLY as usize],
             value: Value(0),
             root_moves: RootMoves::new(),
-            ttable: TranspositionTable::new(tt_size_mb),
+            ttable: ttable,//TranspositionTable::new(tt_size_mb),
             history: HISTORY_ZERO,
             limits: limits,
             time: TimeManager::new(&limits, us, ply),
@@ -261,14 +262,14 @@ impl Thread {
         let mut curr_depth = 1;
         println!("{} {}", self.time.optimum(), self.limits.use_time_management());
         while (curr_depth <= max_depth && !self.limits.use_time_management()) || 
-        (self.limits.use_time_management() && next_time < self.time.optimum() || curr_depth < 5) {
+        (self.limits.use_time_management() && next_time < self.time.optimum()) {
             
             self.clear_history();
             self.init_stacks();
 
             self.value = search(pos, ply, alpha, beta, Depth(curr_depth), self);
 
-            self.print_info();
+            
 
             self.root_moves.sort();
 
@@ -293,6 +294,8 @@ impl Thread {
             prev_time = elapsed;
 
             curr_depth += 1;
+
+            self.print_info();
 
         }
 
