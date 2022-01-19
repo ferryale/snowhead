@@ -11,3 +11,5 @@ pub mod evaluate;
 pub mod uci;
 pub mod movepick;
 pub mod tt;
+pub mod timeman;
+pub mod uciset;
