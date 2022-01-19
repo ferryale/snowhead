@@ -30,6 +30,12 @@ impl RootMoves {
 
     pub fn next_move(&mut self) -> Move {
         let next_move = self.ext_moves[self.cur].m;
+        //self.cur += 1;
+        next_move
+    }
+
+    pub fn next(&mut self) -> ExtMove {
+        let next_move = self.ext_moves[self.cur];
         self.cur += 1;
         next_move
     }
@@ -187,6 +193,14 @@ impl Thread {
 
     }
 
+    fn print_root_moves(&mut self) {
+        loop {
+            let ext_move = self.root_moves.next();
+            if ext_move.m == Move::NONE { break };
+            println!("{} {:?}", ext_move.m.to_string(false), ext_move.value);
+        } 
+    }
+
     // fn sort_root_moves(&mut self) {
 
     //     for ext_move in self.root_moves.iter().enumerate() {
@@ -205,8 +219,12 @@ impl Thread {
             self.value = search(pos, ply, alpha, beta, Depth(curr_depth), self);
            
             self.print_info();
+            
 
             self.root_moves.sort();
+            // self.print_root_moves();
+            // self.root_moves.sort();
+            
 
             self.clear_history();
 
@@ -302,7 +320,9 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
         let m = if root_node && depth > Depth(1) {
             // At a root_node, get the next move from root_moves, sorted based on previous iteration
-            thread.root_moves.next_move()
+            let tmp = thread.root_moves.next_move();
+            //println!("{}", tmp.to_string(false));
+            tmp
         } else { 
             // At a non root_node, het the next_move from the movepicker.
             mp.next_move(pos, false)
