@@ -163,24 +163,28 @@ impl Thread {
         self.ss[0].pv
     }
 
+    fn plies_from_mate(&self) -> i32 {
+        Value::MATE.0 - self.value.0.abs()
+    }
+
     pub fn pv_string(&self) -> String {
         let mut ret = String::new();
+        let mut ply = 0;
         for m in &self.pv() {
             if *m == Move::NONE { break; }
+            if ply >= self.plies_from_mate() { break; }
             ret = format!("{} {}", ret, m.to_string(false));
+            ply += 1;
         }
         ret
     }
 
     pub fn score(&self) -> String {
         let mut ret = String::new();
-        let plies_from_mate;
         if self.value > mate_in(MAX_PLY) {
-            plies_from_mate = Value::MATE - self.value;
-            ret = format!("mate {}", 1 + plies_from_mate.0/2) 
+            ret = format!("mate {}", 1 + self.plies_from_mate()/2) 
         } else if self.value < mated_in(MAX_PLY) {
-            plies_from_mate = Value::MATE + self.value;
-            ret = format!("mate -{}", plies_from_mate.0/2) 
+            ret = format!("mate -{}", self.plies_from_mate()/2) 
         } else {
             ret = format!("cp {}", self.value.0)
         }
