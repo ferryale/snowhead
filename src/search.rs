@@ -281,7 +281,7 @@ impl Thread {
         let mut curr_depth = 1;
         //println!("{} {}", self.time.optimum(), self.limits.use_time_management());
         while (curr_depth <= max_depth && !self.limits.use_time_management()) || 
-        (self.limits.use_time_management() && next_time < self.time.optimum()) {
+        (self.limits.use_time_management() && next_time < self.time.optimum() || curr_depth <= 5) {
             
             self.clear_history();
             self.init_stacks();
@@ -297,7 +297,7 @@ impl Thread {
             // Can we do another iteration?
             elapsed = self.time();
             self.iter_time = elapsed - prev_time;
-            nps = std::cmp::min(self.nps(), 100_000);
+            nps = std::cmp::max(self.nps(), 1_000_000);
 
             ebf = self.nodes() as f32 / prev_nodes as f32;
             // next_nodes = self.nodes() as f32 * ebf;
@@ -371,11 +371,12 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
         if tt_flag == TTFlag::LOWER && tt_value >= beta {
             return beta;
         }
-        if tt_flag == TTFlag::EXACT && tt_depth == depth {
-            //thread.ss[ply].pv[ply] = tt_move;
-            //update_pv(&mut thread.ss, ply, tt_move);
-            return tt_value;
-        }
+        // This is unstable!
+        // if tt_flag == TTFlag::EXACT && tt_depth == depth {
+        //     //thread.ss[ply].pv[ply] = tt_move;
+        //     //update_pv(&mut thread.ss, ply, tt_move);
+        //     return tt_value;
+        // }
         if tt_flag == TTFlag::UPPER && tt_value <= alpha {
             return alpha;
         }
