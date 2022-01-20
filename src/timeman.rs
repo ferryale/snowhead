@@ -12,25 +12,23 @@ pub struct TimeManager {
 }
 
 impl TimeManager {
-    pub fn new(limits: &UCILimits, us: Color, ply: i32) -> TimeManager { 
-        let mut time = TimeManager {
-            start_time: limits.start_time,
+    pub fn new() -> TimeManager { 
+        TimeManager {
+            start_time: SystemTime::now(),
             opt_time: 0,
             max_time: 0,
-        };
-        time.init(limits, us, ply);
-        time
+        }
     }
 
-    fn init(&mut self, limits: &UCILimits, us: Color, ply: i32) {
-
+    pub fn init(&mut self, limits: &UCILimits, us: Color, ply: i32) {
+        self.start_time = limits.start_time;
         let move_num = ply/2;
         let mtg = if limits.movestogo > 0 { 
             limits.movestogo } else { 
                 MAX_MOVES_TO_GO 
             };
 
-        let time_left = std::cmp::max(1, limits.time[us] + limits.inc[us] * (mtg as i64 - 1) - 100 * (mtg as i64));
+        let time_left = std::cmp::max(1, limits.time[us] + limits.inc[us] * (mtg as i64 - 1) - 10 * (mtg as i64));
 
         let max_start = 10;
         let max_end = 30;
@@ -63,7 +61,7 @@ impl TimeManager {
 
     // Returns time in ms
     pub fn optimum(&self) -> i64 {
-        std::cmp::max(self.opt_time, 10)
+        std::cmp::max(self.opt_time, 5)
 
     }
 

@@ -88,23 +88,38 @@ pub struct Thread {
 }
 
 impl Thread {
-    //pub fn new(tt_size_mb: usize, limits: UCILimits, us: Color, ply: i32) -> Thread {
-    pub fn new(ttable: TranspositionTable, limits: UCILimits, us: Color, ply: i32) -> Thread {
+    pub fn new(tt_size_mb: usize) -> Thread {
+    //pub fn new(ttable: TranspositionTable, limits: UCILimits, us: Color, ply: i32) -> Thread {
 
         let mut thread = Thread {
             ss: [Stack::new(); MAX_PLY as usize],
             value: Value(0),
             root_moves: RootMoves::new(),
-            ttable: ttable,//TranspositionTable::new(tt_size_mb),
+            ttable: TranspositionTable::new(tt_size_mb),
             history: HISTORY_ZERO,
-            limits: limits,
-            time: TimeManager::new(&limits, us, ply),
+            limits: UCILimits::new(),
+            time: TimeManager::new(),
             iter_time: 0i64,
         };
 
         thread.init_stacks();
         thread
     }
+
+    pub fn init(&mut self) {
+        self.init_root_moves();
+        self.init_stacks();
+    }
+
+    pub fn init_time(&mut self, limits: UCILimits, us: Color, ply: i32) {
+        self.time.init(&limits, us, ply);
+        self.limits = limits;
+    }
+
+    pub fn clear_ttable(&mut self) {
+        self.ttable.clear();
+    }
+    
 
     pub fn depth(&self) -> usize {
 
@@ -219,6 +234,10 @@ impl Thread {
 
     }
 
+    fn init_root_moves(&mut self) {
+        self.root_moves = RootMoves::new();
+    }
+
     fn clear_history(&mut self) {
 
        self.history = HISTORY_ZERO
@@ -260,7 +279,7 @@ impl Thread {
         };
         
         let mut curr_depth = 1;
-        println!("{} {}", self.time.optimum(), self.limits.use_time_management());
+        //println!("{} {}", self.time.optimum(), self.limits.use_time_management());
         while (curr_depth <= max_depth && !self.limits.use_time_management()) || 
         (self.limits.use_time_management() && next_time < self.time.optimum()) {
             
@@ -348,11 +367,13 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
     let (tt_hit, tt_value, tt_flag, tt_depth, tt_move) = thread.ttable.probe(pos.key());
 
     // If tt_hit return the move immediately
-    if tt_hit && tt_move != Move::NONE && tt_depth >= depth {
+    if tt_hit && tt_move != Move::NONE && tt_depth >= depth && pos.legal(tt_move) {
         if tt_flag == TTFlag::LOWER && tt_value >= beta {
             return beta;
         }
-        if tt_flag == TTFlag::EXACT {
+        if tt_flag == TTFlag::EXACT && tt_depth == depth {
+            //thread.ss[ply].pv[ply] = tt_move;
+            //update_pv(&mut thread.ss, ply, tt_move);
             return tt_value;
         }
         if tt_flag == TTFlag::UPPER && tt_value <= alpha {
@@ -382,6 +403,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
     }
     
     // Init movepicker
+
     let mut mp = MovePicker::new(pos, tt_move, ply, depth, &mut thread.ss, thread.history);
 
     loop {

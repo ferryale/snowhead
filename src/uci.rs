@@ -66,11 +66,11 @@ fn position(pos: &mut Position, args: &str) {
 // sets the thinking time and other parameters from the input string, then
 // starts the search.
 
-fn go(pos: &mut Position, args: &str, ttable: TranspositionTable) {
-
-    let mut iter = args.split_whitespace();
+fn go(pos: &mut Position, args: &str, thread: &mut Thread) {
 
     let mut limits = UCILimits::new(); // This starts the time
+    let mut iter = args.split_whitespace();
+
     while let Some(token) = iter.next() {
         match token {
             "wtime" => limits.time[WHITE] =
@@ -99,8 +99,8 @@ fn go(pos: &mut Position, args: &str, ttable: TranspositionTable) {
         let nodes = perft::<true>(pos, Depth(limits.perft as i32));
         println!("Total nodes seached: {}", nodes);
     } else {
-        //let ttable = TranspositionTable::new(1000);
-        let mut thread = Thread::new(ttable, limits, pos.side_to_move(), pos.game_ply());
+        thread.init_time(limits, pos.side_to_move(), pos.game_ply());
+        thread.init();
         thread.search(pos);
     }
 
@@ -116,6 +116,7 @@ fn go(pos: &mut Position, args: &str, ttable: TranspositionTable) {
 
 pub fn cmd_loop() {
     let mut pos = Box::new(Position::new());
+    let mut thread = Thread::new(8);
 
     pos.init_states();
     pos.set(START_FEN, false);
@@ -150,15 +151,15 @@ pub fn cmd_loop() {
         // threads::stop_on_ponderhit() is true, we are waiting for
         // 'ponderhit' to stop the search, for instance if max search depth
         // has been reached.
-        let mut ttable = TranspositionTable::new(8);
+
         match token {
             "quit" | "stop" => {},
-            "ucinewgame" => { ttable = TranspositionTable::new(8) }
+            "ucinewgame" => { thread = Thread::new(8); }
             "uci" => {
                 println!("id name Snowhead v0.1.0");
                 println!("uciok");
             }
-            "go" => go(&mut pos, args, ttable),
+            "go" => go(&mut pos, args, &mut thread),
             "position" =>
                 position(&mut pos, args),
             
