@@ -1,7 +1,7 @@
 use crate::types::square::{SQUARE_NB};
 use crate::types::piece::{WHITE, BLACK, PIECE_NB, Color};
 use crate::types::r#move::Move;
-use crate::types::score::{Depth, Value, mated_in, MAX_PLY, MAX_MOVES};
+use crate::types::score::{Depth, Value, mated_in, mate_in, MAX_PLY, MAX_MOVES};
 use crate::movegen::ExtMove;
 use crate::position::Position;
 use crate::evaluate::evaluate;
@@ -172,8 +172,19 @@ impl Thread {
         ret
     }
 
-    pub fn score_cp(&self) -> i32 {
-        self.value.0
+    pub fn score(&self) -> String {
+        let mut ret = String::new();
+        let plies_from_mate;
+        if self.value > mate_in(MAX_PLY) {
+            plies_from_mate = Value::MATE - self.value;
+            ret = format!("mate {}", 1 + plies_from_mate.0/2) 
+        } else if self.value < mated_in(MAX_PLY) {
+            plies_from_mate = Value::MATE + self.value;
+            ret = format!("mate -{}", plies_from_mate.0/2) 
+        } else {
+            ret = format!("cp {}", self.value.0)
+        }
+        ret
     }
 
     pub fn time(&self) -> i64 {
@@ -205,8 +216,8 @@ impl Thread {
 
     pub fn info(&self) -> String {
 
-        format!("depth {} seldepth {} time {} nodes {} score cp {} nps {} pv{}", 
-            self.depth(), self.seldepth(), self.time(), self.nodes(), self.score_cp(),
+        format!("depth {} seldepth {} time {} nodes {} score {} nps {} pv{}", 
+            self.depth(), self.seldepth(), self.time(), self.nodes(), self.score(),
             self.nps(), self.pv_string())
         
     }
