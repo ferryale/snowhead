@@ -28,16 +28,18 @@ impl TimeManager {
                 MAX_MOVES_TO_GO 
             };
 
-        let time_left = std::cmp::max(1, limits.time[us] + limits.inc[us] * (mtg as i64 - 1) - 10 * (mtg as i64));
+        let time_left = std::cmp::max(1, limits.time[us] + limits.inc[us] * (mtg as i64 - 1) - 1 * (mtg as i64));
 
-        let max_start = 10;
-        let max_end = 30;
+        let max_start = 15;
+        let max_end = 20;
 
         let moves_max = max_start - max_end;
 
         let scale_diff = 2.0 / (moves_max + mtg) as f32;
         let scale_min = 0.01;
         let scale_max = scale_min + scale_diff;
+
+        // println!("{} {}", scale_min, scale_max);
 
         let scale = if move_num < max_start {
             scale_min + move_num as f32 * (scale_diff/max_start as f32)
@@ -61,7 +63,7 @@ impl TimeManager {
 
     // Returns time in ms
     pub fn optimum(&self) -> i64 {
-        std::cmp::max(self.opt_time, 5)
+        std::cmp::max(self.opt_time, 1)
 
     }
 
