@@ -218,10 +218,10 @@ impl Thread {
         
     // }
 
-    pub fn info(&self) -> String {
+    pub fn info(&self, depth: i32) -> String {
 
         format!("depth {} seldepth {} time {} nodes {} score {} nps {} pv{}", 
-            self.depth(), self.seldepth(), self.time(), self.nodes(), self.score(),
+            depth, self.seldepth(), self.time(), self.nodes(), self.score(),
             self.nps(), self.pv_string())
         
     }
@@ -233,8 +233,8 @@ impl Thread {
 
     }
 
-    pub fn print_info(&self) {
-        println!("info {}", self.info());
+    pub fn print_info(&self, depth: i32) {
+        println!("info {}", self.info(depth));
     }
 
     pub fn print_best_move(&self) {
@@ -327,9 +327,11 @@ impl Thread {
             
             prev_time = elapsed;
 
+            self.print_info(curr_depth);
+
             curr_depth += 1;
 
-            self.print_info();
+            
 
         }
 
