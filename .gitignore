@@ -2,3 +2,4 @@
 perft6_test_fail.txt
 *.zip
 *.sublime*
+/tune
