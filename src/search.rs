@@ -296,7 +296,7 @@ impl Thread {
         let mut curr_depth = 1;
         //println!("{} {}", self.time.optimum(), self.limits.use_time_management());
         while (curr_depth <= max_depth && !self.limits.use_time_management()) || 
-        (self.limits.use_time_management() && next_time < self.time.optimum() || curr_depth <= 5) {
+        (self.limits.use_time_management() && (next_time < self.time.optimum() || curr_depth <=1)) {
             
             self.clear_history();
             self.init_stacks();
@@ -315,10 +315,13 @@ impl Thread {
             nps = std::cmp::max(self.nps(), 1_000_000);
 
             ebf = self.nodes() as f32 / prev_nodes as f32;
+            //if ebf > 5.0 { ebf= 5.0 }
             // next_nodes = self.nodes() as f32 * ebf;
 
             // next_time = elapsed + (next_nodes as f32 / nps as f32 * 1000.0) as i64;
             next_time = elapsed + (self.iter_time as f32 * ebf) as i64;
+
+            
 
             // println!("ebf {} next_nodes {} next_time {} nodes {} prev_nodes {} iter time {}\n", ebf, next_nodes, next_time,
             //     self.nodes(), prev_nodes, self.iter_time);
@@ -328,6 +331,7 @@ impl Thread {
             prev_time = elapsed;
 
             self.print_info(curr_depth);
+            //println!("ebf {} next_time {} iter time {}\n", ebf, next_time, self.iter_time);
 
             curr_depth += 1;
 
