@@ -20,7 +20,7 @@ pub struct Phase(pub u32);
 
 impl Phase {
     pub const ENDGAME: Phase = Phase(0);
-    pub const MIDGAME: Phase = Phase(128);
+    pub const MIDGAME: Phase = Phase(48);
     pub const PAWN: Phase = Phase(0);
     pub const KNIGHT: Phase = Phase(2);
     pub const BISHOP: Phase = Phase(2);

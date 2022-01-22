@@ -116,7 +116,7 @@ fn go(pos: &mut Position, args: &str, thread: &mut Thread) {
 
 pub fn cmd_loop() {
     let mut pos = Box::new(Position::new());
-    let mut thread = Thread::new(8);
+    let mut thread = Thread::new(256);
 
     pos.init_states();
     pos.set(START_FEN, false);
@@ -154,7 +154,7 @@ pub fn cmd_loop() {
 
         match token {
             "quit" | "stop" => {},
-            "ucinewgame" => { thread = Thread::new(8); }
+            "ucinewgame" => { thread = Thread::new(256); }
             "uci" => {
                 println!("id name Snowhead v0.1.0");
                 println!("uciok");
