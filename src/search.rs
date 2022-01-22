@@ -422,7 +422,7 @@ fn update_killers(ss: &mut [Stack], ply: usize, m: Move) {
 }
 
 
-fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: Depth, pv: &mut PV, thread: &mut Thread) -> Value {
+fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, mut depth: Depth, pv: &mut PV, thread: &mut Thread) -> Value {
 
     thread.ss[ply].node_count += 1;
 
@@ -439,17 +439,17 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
     let (tt_hit, tt_value, tt_flag, tt_depth, tt_move) = thread.ttable.probe(pos.key());
 
-    // If tt_hit return the move immediately
-    if tt_hit && tt_move != Move::NONE && tt_depth >= depth && pos.legal(tt_move) {
+    // If tt_hit return the move immediately. NEVER DO THIS ON PV NODE!.
+    if tt_hit && tt_move != Move::NONE && tt_depth >= depth && !pv_node {
         if tt_flag == TTFlag::LOWER && tt_value >= beta {
             return beta;
         }
         // This is unstable!
-        // if tt_flag == TTFlag::EXACT && tt_depth == depth {
-        //     //thread.ss[ply].pv[ply] = tt_move;
-        //     //update_pv(&mut thread.ss, ply, tt_move);
-        //     return tt_value;
-        // }
+        if tt_flag == TTFlag::EXACT {
+            //thread.ss[ply].pv[ply] = tt_move;
+            //update_pv(&mut thread.ss, ply, tt_move);
+            return tt_value;
+        }
         if tt_flag == TTFlag::UPPER && tt_value <= alpha {
             return alpha;
         }
@@ -462,8 +462,13 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
     // For depth <=0 go in quiescent search
     if depth <= Depth(0) {
-        thread.ss[ply].node_count -= 1;
-        return qsearch(pos, ply, alpha, beta, Depth(0), &mut child_pv, thread);
+        if pos.checkers() != 0 {
+            depth = Depth(1);
+        } else {
+            thread.ss[ply].node_count -= 1;
+            return qsearch(pos, ply, alpha, beta, depth, &mut child_pv, thread);
+        }
+       
     }
 
     // Null move pruning
