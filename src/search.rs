@@ -11,6 +11,23 @@ use crate::uciset::{UCILimits};
 use crate::timeman::{TimeManager};
 
 #[derive(Debug, Clone, Copy)]
+pub struct PV {
+    moves: [Move; MAX_MOVES],
+    count: usize
+} 
+
+impl PV {
+    pub fn new() -> PV {
+        PV {
+            moves: [Move::NONE; MAX_MOVES],
+            count: 0,
+        }
+        
+    }
+}
+
+
+#[derive(Debug, Clone, Copy)]
 pub struct RootMoves {
     ext_moves: [ExtMove; MAX_MOVES],
     cur: usize,
@@ -179,6 +196,15 @@ impl Thread {
         ret
     }
 
+    pub fn pv_string2(pv: &PV) -> String {
+        let mut ret = String::new();
+        for idx in 0..pv.count {
+            let m = pv.moves[idx];
+            ret = format!("{} {}", ret, m.to_string(false));
+        }
+        ret
+    }
+
     pub fn score(&self) -> String {
         let mut ret = String::new();
         if self.value > mate_in(MAX_PLY) {
@@ -226,6 +252,14 @@ impl Thread {
         
     }
 
+    pub fn info2(&self, depth: i32, pv: &PV) -> String {
+
+        format!("depth {} seldepth {} time {} nodes {} score {} nps {} pv{}", 
+            depth, self.seldepth(), self.time(), self.nodes(), self.score(),
+            self.nps(), Self::pv_string2(pv))
+        
+    }
+
     pub fn best_move(&self) -> String {
         let best_move_str = self.pv()[0].to_string(false);
         let ponder_str = self.pv()[1].to_string(false);
@@ -235,6 +269,10 @@ impl Thread {
 
     pub fn print_info(&self, depth: i32) {
         println!("info {}", self.info(depth));
+    }
+
+    pub fn print_info2(&self, depth: i32, pv: &PV) {
+        println!("info {}", self.info2(depth, pv));
     }
 
     pub fn print_best_move(&self) {
@@ -297,11 +335,13 @@ impl Thread {
         //println!("{} {}", self.time.optimum(), self.limits.use_time_management());
         while (curr_depth <= max_depth && !self.limits.use_time_management()) || 
         (self.limits.use_time_management() && (next_time < self.time.optimum() || curr_depth <=1)) {
+
+            let mut pv = PV::new();
             
             self.clear_history();
             self.init_stacks();
 
-            self.value = search(pos, ply, alpha, beta, Depth(curr_depth), self);
+            self.value = search(pos, ply, alpha, beta, Depth(curr_depth), &mut pv, self);
 
             
 
@@ -331,6 +371,7 @@ impl Thread {
             prev_time = elapsed;
 
             self.print_info(curr_depth);
+            self.print_info2(curr_depth, &pv);
             //println!("ebf {} next_time {} iter time {}\n", ebf, next_time, self.iter_time);
 
             curr_depth += 1;
@@ -365,6 +406,14 @@ fn update_pv(ss: &mut [Stack], ply: usize, m: Move){
     
 }
 
+fn update_pv2(pv: &mut PV, m: Move, child_pv: &PV){
+    pv.moves[0] = m;
+    for idx in 0..child_pv.count {
+        pv.moves[idx+1] = child_pv.moves[idx];
+    }
+    pv.count = child_pv.count + 1;   
+}
+
 fn update_killers(ss: &mut [Stack], ply: usize, m: Move) {
     if m != ss[ply].killers[0]{
         ss[ply].killers[1] = ss[ply].killers[0];
@@ -373,9 +422,12 @@ fn update_killers(ss: &mut [Stack], ply: usize, m: Move) {
 }
 
 
-fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: Depth, thread: &mut Thread) -> Value {
+fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: Depth, pv: &mut PV, thread: &mut Thread) -> Value {
 
     thread.ss[ply].node_count += 1;
+
+    let mut child_pv = PV::new();
+    pv.count = 0;
 
     let mut num_legal = 0;
     let mut num_played = 0;
@@ -417,7 +469,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
     // Null move pruning
     if pos.checkers() == 0 {
         pos.do_null_move();
-        value = -search(pos, ply+2, -beta, -beta + 1, depth - 3, thread);
+        value = -search(pos, ply+2, -beta, -beta + 1, depth - 3, &mut child_pv, thread);
         pos.undo_null_move();
         if value >= beta {
             return beta;
@@ -453,15 +505,15 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
         // PVS, first node of PV line with full window, other nodes with null-window.
         if pv_node && num_played == 1 {
-            value =  -search(pos, ply+1, -beta, -alpha, depth-1, thread);
+            value =  -search(pos, ply+1, -beta, -alpha, depth-1, &mut child_pv, thread);
         } else {
             red = 2;
-            value =  -search(pos, ply+1, -alpha-1, -alpha, depth-1-red, thread);
+            value =  -search(pos, ply+1, -alpha-1, -alpha, depth-1-red, &mut child_pv, thread);
             if value > alpha && red > 0 {
-                value =  -search(pos, ply+1, -alpha-1, -alpha, depth-1, thread);
+                value =  -search(pos, ply+1, -alpha-1, -alpha, depth-1, &mut child_pv, thread);
             }
             if value > alpha && (root_node || value < beta) {
-                value =  -search(pos, ply+1, -beta, -alpha, depth-1, thread);
+                value =  -search(pos, ply+1, -beta, -alpha, depth-1, &mut child_pv, thread);
             }
 
         }
@@ -489,6 +541,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
             alpha = value;
             thread.ttable.save(pos.key(), value, TTFlag::EXACT, depth, m);
             update_pv(&mut thread.ss, ply, m);
+            update_pv2(pv, m, &child_pv);
         } else { // fail low
             thread.ttable.save(pos.key(), alpha, TTFlag::UPPER, depth, Move::NONE);
         }
