@@ -370,7 +370,7 @@ impl Thread {
             
             prev_time = elapsed;
 
-            self.print_info(curr_depth);
+            //self.print_info(curr_depth);
             self.print_info2(curr_depth, &pv);
             //println!("ebf {} next_time {} iter time {}\n", ebf, next_time, self.iter_time);
 

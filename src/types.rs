@@ -9,7 +9,7 @@ use self::square::{Rank, File, Square, Direction};
 use self::piece::{Color, PieceType, Piece};
 use self::r#move::{Move, CastlingRight};
 use self::bitboard::Bitboard;
-use self::score::{Depth, Value};
+use self::score::{Depth, Value, Phase};
 
 macro_rules! enable_base_operations_on {
 
@@ -111,7 +111,7 @@ macro_rules! enable_base_i32_operations_for_u32_on {
         impl ops::Sub<i32> for $ty {
             type Output = $ty;
             fn sub(self, rhs: i32) -> Self {
-                $ty(u32::wrapping_add(self.0, rhs as u32))
+                $ty(u32::wrapping_sub(self.0, rhs as u32))
             }
 
         }
@@ -119,6 +119,46 @@ macro_rules! enable_base_i32_operations_for_u32_on {
         impl ops::SubAssign<i32> for $ty {
             fn sub_assign(&mut self, rhs: i32) {
                 *self = *self - rhs;
+            }
+
+        }
+
+    };
+
+}
+
+macro_rules! enable_full_i32_operations_for_u32_on {
+
+    ($ty: ident) => {
+
+        enable_base_i32_operations_for_u32_on!($ty);
+
+        impl ops::Mul<i32> for $ty {
+            type Output = $ty;
+            fn mul(self, rhs: i32) -> Self {
+                $ty(u32::wrapping_mul(self.0, rhs as u32))
+            }
+
+        }
+
+        impl ops::MulAssign<i32> for $ty {
+            fn mul_assign(&mut self, rhs: i32) {
+                *self = *self * rhs;
+            }
+
+        }
+
+        impl ops::Div<i32> for $ty {
+            type Output = $ty;
+            fn div(self, rhs: i32) -> Self {
+                $ty(u32::wrapping_div(self.0, rhs as u32))
+            }
+
+        }
+
+        impl ops::DivAssign<i32> for $ty {
+            fn div_assign(&mut self, rhs: i32) {
+                *self = *self / rhs;
             }
 
         }
@@ -322,11 +362,14 @@ enable_base_i32_operations_for_i32_on!(Direction);
 
 enable_full_i32_operations_for_i32_on!(Value);
 enable_full_i32_operations_for_i32_on!(Depth);
+enable_full_i32_operations_for_u32_on!(Phase);
 
 //enable_base_operations_on!(Ply);
 
 enable_full_operations_on!(Value);
 enable_full_operations_on!(Depth);
+enable_full_operations_on!(Phase);
+
 
 enable_bit_operations_on!(CastlingRight);
 enable_bit_operations_on!(Bitboard);

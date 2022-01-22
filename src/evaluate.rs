@@ -13,19 +13,22 @@ use crate::movegen::{ExtMove, generate_legal};
 
 pub fn evaluate(pos: &Position) -> Value {
 
-    let phase = (pos.count(WHITE, PAWN) + pos.count(BLACK, PAWN)) as u32 * Phase::PAWN +
-                (pos.count(WHITE, KNIGHT) + pos.count(BLACK, KNIGHT)) as u32 * Phase::KNIGHT +
-                (pos.count(WHITE, BISHOP) + pos.count(BLACK, BISHOP)) as u32 * Phase::BISHOP +
-                (pos.count(WHITE, ROOK) + pos.count(BLACK, ROOK)) as u32 * Phase::ROOK +
-                (pos.count(WHITE, QUEEN) + pos.count(BLACK, QUEEN)) as u32 * Phase::QUEEN;
+    let phase = Phase::PAWN * (pos.count(WHITE, PAWN) + pos.count(BLACK, PAWN)) +
+                Phase::KNIGHT * (pos.count(WHITE, KNIGHT) + pos.count(BLACK, KNIGHT)) + 
+                Phase::BISHOP * (pos.count(WHITE, BISHOP) + pos.count(BLACK, BISHOP)) +
+                Phase::ROOK * (pos.count(WHITE, ROOK) + pos.count(BLACK, ROOK)) +
+                Phase::QUEEN * (pos.count(WHITE, QUEEN) + pos.count(BLACK, QUEEN));
 
-    
+    let egs = pos.psq_score().eg();
+    let mgs = pos.psq_score().mg();
+
+    let value = (egs * Phase::MIDGAME + (mgs - egs) * phase) / Phase::MIDGAME;
 
     if pos.side_to_move() == WHITE { 
-        return pos.psq_score().mg(); 
+        return value; 
     } 
         else { 
-        return -pos.psq_score().mg();
+        return -value;
     }
 }
 

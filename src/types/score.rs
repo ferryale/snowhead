@@ -92,6 +92,16 @@ impl std::ops::Mul<Value> for i32 {
     fn mul(self, rhs: Value) -> Value { Value(self * rhs.0) }
 }
 
+impl std::ops::Mul<Phase> for Value {
+    type Output = Self;
+    fn mul(self, rhs: Phase) -> Self { Value(self.0 * rhs.0 as i32) }
+}
+
+impl std::ops::Div<Phase> for Value {
+    type Output = Self;
+    fn div(self, rhs: Phase) -> Self { Value(self.0 / rhs.0 as i32) }
+}
+
 // impl std::ops::Add<Ply> for Value {
 //     type Output = Value;
 //     fn add(self, rhs: Ply) -> Value { Value(self + rhs.0) }
