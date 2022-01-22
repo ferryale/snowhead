@@ -463,7 +463,7 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
     // For depth <=0 go in quiescent search
     if depth <= Depth(0) {
         thread.ss[ply].node_count -= 1;
-        return qsearch(pos, ply, alpha, beta, Depth(0), thread);
+        return qsearch(pos, ply, alpha, beta, Depth(0), &mut child_pv, thread);
     }
 
     // Null move pruning
@@ -567,7 +567,11 @@ fn search(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: 
 
 }
 
-fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: Depth, thread: &mut Thread) -> Value {
+fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth: Depth, pv: &mut PV, thread: &mut Thread) -> Value {
+
+    let mut child_pv = PV::new();
+    pv.count = 0;
+
     thread.ss[ply].node_count += 1;
 
     // Checks for 50 rule count and repetition draw. Stalemate is handled later.
@@ -605,7 +609,7 @@ fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth:
 
         pos.do_move(m);
 
-        value = -qsearch(pos, ply+1, -beta, -alpha, depth-1, thread);
+        value = -qsearch(pos, ply+1, -beta, -alpha, depth-1, &mut child_pv, thread);
 
         pos.undo_move(m);
 
@@ -615,6 +619,7 @@ fn qsearch(pos: &mut Position, ply: usize, mut alpha: Value, beta: Value, depth:
         }
         if value > alpha {
             alpha = value;
+            update_pv2(pv, m, &child_pv);
         }
 
     }
