@@ -21,6 +21,11 @@ pub struct Phase(pub u32);
 impl Phase {
     pub const ENDGAME: Phase = Phase(0);
     pub const MIDGAME: Phase = Phase(128);
+    pub const PAWN: Phase = Phase(2);
+    pub const KNIGHT: Phase = Phase(4);
+    pub const BISHOP: Phase = Phase(4);
+    pub const ROOK: Phase = Phase(8);
+    pub const QUEEN: Phase = Phase(16);
 }
 
 pub const MG: usize = 0;
