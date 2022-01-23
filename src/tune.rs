@@ -7,6 +7,7 @@ use crate::types::square::*;
 use crate::types::piece::*;
 use crate::types::score::*;
 use crate::psqt::min_file;
+use crate::psqt;
 use crate::uci::START_FEN;
 
 
@@ -49,8 +50,6 @@ pub const fn init_psq(bonus: &Bonus, piece_value: &PieceValue) -> Psqt {
 pub fn eval(args: &str) {
     let fen: &str;
 
-    //println!("{}", args);
-
     let params = match args.find("params") {
         Some(idx) => idx,
         None => args.len(),
@@ -72,25 +71,12 @@ pub fn eval(args: &str) {
     }
 
     let mut piece_value = [[Value(0); 6]; 2];
-    let mut psqt = [[[Score(0); 4]; FILE_NB]; 6];
+    let mut bonus = [[[Score(0); 4]; FILE_NB]; 6];
 
     // Parse move list
     let params = &args[params+6..].trim();
     let mut iter = params.split_whitespace();
-    // for (idx, val) in iter.enumerate() {
-    //     if idx < 12 {
-    //         let pc_idx = idx % 6;
-    //         let phase = idx / 6;
-    //         piece_value[phase][pc_idx] = Value(val.parse().unwrap());
-    //     } else {
-    //         let mg_value = Value(val.parse().unwrap());
-    //         let eg_value = Value(iter.next().unwrap().parse().unwrap());
-    //         idx += 1;
-    //         println!("{:?} {:?}", mg_value, eg_value)
-    //         // let psq_idx = (idx - 12) % 64;
-    //         // let pc_idx = (idx - 12) / 64;
-    //     }  
-    // }
+    
     let mut idx = 0;
     while let Some(val) = iter.next() {
         if idx < 12 {
@@ -104,14 +90,16 @@ pub fn eval(args: &str) {
             let file_idx = sq_idx % 4;
             let rank_idx = sq_idx / 4;
             let pc_idx = (idx - 12) / 32;
-            psqt[file_idx][rank_idx][pc_idx] = Score::make(mg_value, eg_value);
-            println!("{:?} {:?}", mg_value, eg_value);
+            bonus[pc_idx][rank_idx][file_idx] = Score::make(mg_value, eg_value);
         }  
         idx += 1;
     }
 
+    let psq_table = init_psq(&bonus, &piece_value);
+    assert_eq!(psq_table, psqt::PSQ);
+
     // eval startpos params 100 300 300 500 900 0 100 300 300 500 900 0
-    println!("{:?}", piece_value);
+    // println!("{:?}", piece_value);
 
     // if arg.len() == 
 
