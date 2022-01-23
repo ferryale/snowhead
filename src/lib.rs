@@ -13,3 +13,4 @@ pub mod movepick;
 pub mod tt;
 pub mod timeman;
 pub mod uciset;
+pub mod tune;
