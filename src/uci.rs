@@ -4,6 +4,7 @@ use crate::movegen::{ExtMove, generate_legal};
 use crate::position::Position;
 use crate::search::Thread;
 use crate::perft::perft;
+use crate::tune::eval;
 use crate::tt::{TranspositionTable, TTFlag};
 
 use crate::types::r#move::Move;
@@ -17,7 +18,7 @@ use std::env;
 // use std::time::Instant;
 
 // FEN string of the initial position, normal chess
-const START_FEN: &'static str =
+pub const START_FEN: &'static str =
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 // position() is called when engine receives the "position" UCI command.
@@ -144,6 +145,7 @@ pub fn cmd_loop() {
             };
         let args = args.trim();
 
+
         // The GUI sends 'ponderhit' to tell us the user has played the
         // expected move. So 'ponderhit' will be sent if we were told to
         // ponder on the same move the user has played. We should continue
@@ -167,6 +169,7 @@ pub fn cmd_loop() {
 
             // Additional custom non-UCI commands
             "d" => pos.print(),
+            "eval" => eval(args),
             _ => println!("Unknown command: {} {}", cmd, args)
         }
         if env::args().len() > 1 || token == "quit" {
