@@ -8,6 +8,7 @@ use crate::types::score::*;
 
 macro_rules! S { ($x:expr, $y:expr) => (Score(($y << 16) + $x)) }
 
+
 // Bonus is symmetric wrt ranks
 const BONUS: [[[Score; 4]; FILE_NB]; 6] = 
 [
@@ -72,7 +73,6 @@ const BONUS: [[[Score; 4]; FILE_NB]; 6] =
     [S!(-30, -50), S!(-40, -40), S!(-40, -30), S!(-50, -20)]
   ]
 ];
-
 
 // // Bonus is symmetric wrt ranks
 // const BONUS: [[[Score; 4]; FILE_NB]; 6] = [
@@ -218,7 +218,7 @@ pub fn psq(pc: Piece, s: Square) -> Score {
     PSQ[pc][s] 
 }
 
-const fn min_file(f1: File, f2: File) -> File {
+pub const fn min_file(f1: File, f2: File) -> File {
     if f1.0 < f2.0 { f1 } else { f2 }
 }
 
