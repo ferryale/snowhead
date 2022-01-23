@@ -156,7 +156,7 @@ pub fn cmd_loop() {
             "quit" | "stop" => {},
             "ucinewgame" => { thread = Thread::new(256); }
             "uci" => {
-                println!("id name Snowhead v0.1.0");
+                println!("id name Snowhead v0.1.1");
                 println!("uciok");
             }
             "go" => go(&mut pos, args, &mut thread),
