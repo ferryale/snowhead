@@ -1,12 +1,14 @@
 [package]
 name = "snowhead"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
-# build = "src/build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+cozy-chess = "0.2.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 [profile.release]
 opt-level = 3               # Use slightly better optimizations.

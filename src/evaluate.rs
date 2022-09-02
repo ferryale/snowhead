@@ -1,54 +1,42 @@
-use crate::types::piece::{WHITE, BLACK, PAWN, KNIGHT, BISHOP, ROOK, QUEEN};
-use crate::types::bitboard::EMPTY_BB;
-use crate::types::r#move::Move;
-use crate::types::score::{Value, Phase, MAX_MOVES};
-use crate::position::Position;
-use crate::movegen::{ExtMove, generate_legal};
+use self::psqt::PsqTable;
+use self::score::{Phase, Score, Value};
+use cozy_chess::{Board, Color, File, Piece, Rank};
 
-// pub const MAX_VALUE_MG: Value = max_value_mg();
+pub mod psqt;
+pub mod score;
 
-// const fn max_value_mg() -> Value {
-//     Value(16*Value::PAWN_MG.0 + 4*Value::KNIGHT_MG.0 + 4*Value::BISHOP_MG.0 + 4*Value::ROOK_MG.0 + 2*Value::QUEEN_MG.0)
-// }
-
-pub fn evaluate(pos: &Position) -> Value {
-
-    let phase = Phase::PAWN * (pos.count(WHITE, PAWN) + pos.count(BLACK, PAWN)) +
-                Phase::KNIGHT * (pos.count(WHITE, KNIGHT) + pos.count(BLACK, KNIGHT)) + 
-                Phase::BISHOP * (pos.count(WHITE, BISHOP) + pos.count(BLACK, BISHOP)) +
-                Phase::ROOK * (pos.count(WHITE, ROOK) + pos.count(BLACK, ROOK)) +
-                Phase::QUEEN * (pos.count(WHITE, QUEEN) + pos.count(BLACK, QUEEN));
-
-    let egs = pos.psq_score().eg();
-    let mgs = pos.psq_score().mg();
-
-    let value = (egs * Phase::MIDGAME + (mgs - egs) * phase) / Phase::MIDGAME;
-
-    if pos.side_to_move() == WHITE { 
-        return value; 
-    } 
-        else { 
-        return -value;
-    }
+#[derive(Debug, Clone, Copy)]
+pub struct Evaluator {
+    pub psq_tables: [PsqTable; Color::NUM],
 }
 
-impl Position {
-    // is_draw() tests whether the position is drawn by 50-move rule or by
-    // repetition. It does not detect stalemates.
+impl Evaluator {
+    pub fn new(
+        pc_table: &[[i16; Phase::NUM]; Piece::NUM],
+        sq_tables: &[[[[i16; Phase::NUM]; File::NUM]; Rank::NUM]; Piece::NUM],
+    ) -> Evaluator {
+        let psqt = PsqTable::new(pc_table, sq_tables);
 
-    pub fn is_draw(&self, ply: i32) -> bool {
-        if self.rule50_count() > 99 {
-
-            let mut list = [ExtMove {m: Move::NONE, value: Value::ZERO}; MAX_MOVES];
-            let num_moves = generate_legal(&self, &mut list, 0);
-
-            if self.checkers() == EMPTY_BB || num_moves != 0 {
-                return true;
-
-            }
+        Evaluator {
+            psq_tables: [psqt, !psqt],
         }
+    }
 
-        self.st().repetition != 0 && self.st().repetition < ply 
+    pub fn default() -> Evaluator {
+        Evaluator {
+            psq_tables: [PsqTable::default(), !PsqTable::default()],
+        }
+    }
 
+    pub fn evaluate(self, board: &Board) -> Value {
+        let mut score = Score::ZERO;
+        let mut pc: Piece;
+        let mut c: Color;
+        for sq in board.occupied() {
+            pc = board.piece_on(sq).unwrap();
+            c = board.color_on(sq).unwrap();
+            score += self.psq_tables[c as usize].probe(&pc, &sq);
+        }
+        score.values[0]
     }
 }
