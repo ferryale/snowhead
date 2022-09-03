@@ -1,6 +1,6 @@
 use cozy_chess::{Square, Move};
 use crate::evaluate::score::Value;
-use std::cmp;
+use std::{cmp, fmt};
 
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct MoveValue {
@@ -32,7 +32,7 @@ impl MoveValue {
         self.mv
     }
 
-    pub fn value(&self) -> Value{
+    pub fn value(&self) -> Value {
         self.value
     }
 
@@ -50,6 +50,35 @@ impl Default for MoveValue {
         }
     }
 }
+
+impl fmt::Display for MoveValue {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Write strictly the first element into the supplied output
+        // stream: `f`. Returns `fmt::Result` which indicates whether the
+        // operation succeeded or failed. Note that `write!` uses syntax which
+        // is very similar to `println!`.
+        write!(f, "{}, {}", self.mv, self.value.0)
+    }
+}
+
+impl<const N: usize> fmt::Display for MoveValues<N> {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Write strictly the first element into the supplied output
+        // stream: `f`. Returns `fmt::Result` which indicates whether the
+        // operation succeeded or failed. Note that `write!` uses syntax which
+        // is very similar to `println!`.
+        for idx in 0..self.size {
+            write!(f, "{}", self.list[idx]);
+            if idx < self.size-1 {
+                write!(f, "\n");
+            }
+        }
+        Ok(())
+    }
+}
+
 
 impl Ord for MoveValue {
     fn cmp(&self, other: &MoveValue) -> cmp::Ordering {
@@ -76,6 +105,7 @@ pub struct MoveValues<const N: usize> {
     idx: usize,
     size: usize,
 }
+
 impl<const N: usize> MoveValues<N> {
     pub fn new() -> MoveValues<N> {
         MoveValues {
@@ -123,13 +153,29 @@ impl<const N: usize> MoveValues<N> {
         self.list.sort();
     }
 
-    pub fn next(&mut self) -> MoveValue {
-        self.idx += 1;
-        self.list[self.idx-1]
+    pub fn extend(&mut self, other: &MoveValues<N>) {
+        let new_size = self.size + other.size();
+        for j in self.size..new_size {
+            self.list[j] = other.list[j-self.size()];
+        }
+        self.size = new_size;
     }
 
-    pub fn next_move(&mut self) -> Move {
-        self.next().chess_move()
+    pub fn next(&mut self) -> Option<MoveValue> {
+        if self.idx < self.size {
+            let next = self.list[self.idx];
+            self.idx += 1;
+            Some(next)
+        } else {
+            None
+        }
+    }
+
+    pub fn next_move(&mut self) -> Option<Move> {
+        match self.next() {
+            Some(move_value) => Some(move_value.chess_move()),
+            None => None
+        }
     }
 
     pub fn list(&self) -> [MoveValue;N] {
@@ -142,6 +188,18 @@ impl<const N: usize> MoveValues<N> {
 
     pub fn idx(&self) -> usize {
         self.idx
+    }
+
+    pub fn set_idx(&mut self, idx: usize) {
+        self.idx = idx;
+    }
+
+    pub fn incr_idx(&mut self, incr: usize) {
+        self.idx+= incr;
+    }
+
+    pub fn decr_idx(&mut self, incr: usize) {
+        self.idx-= incr;
     }
     
 }
