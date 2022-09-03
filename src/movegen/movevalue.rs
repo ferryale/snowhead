@@ -10,14 +10,10 @@ pub struct MoveValue {
 
 impl MoveValue {
 
-    pub fn new() -> MoveValue {
+    pub fn new(mv: Move, value: Value) -> MoveValue {
         MoveValue {
-            mv: Move {
-                from: Square::A1,
-                to: Square::A1,
-                promotion: None,
-            }, 
-            value: Value(0)
+            mv: mv, 
+            value: value,
         }
     }
 
@@ -40,6 +36,19 @@ impl MoveValue {
         self.value
     }
 
+}
+
+impl Default for MoveValue {
+    fn default() -> MoveValue {
+        MoveValue {
+            mv: Move {
+                from: Square::A1,
+                to: Square::A1,
+                promotion: None,
+            }, 
+            value: Value(0)
+        }
+    }
 }
 
 impl Ord for MoveValue {
@@ -70,7 +79,7 @@ pub struct MoveValues<const N: usize> {
 impl<const N: usize> MoveValues<N> {
     pub fn new() -> MoveValues<N> {
         MoveValues {
-            list: [MoveValue::new();N],
+            list: [MoveValue::default();N],
             idx: 0,
             size: 0
         }
