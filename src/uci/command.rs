@@ -107,25 +107,30 @@ impl GoOptions {
 
 impl Position {
     fn parse(args: Vec<&str>, uci_options: &UciOptions) -> UciCommand {
-        let mut moves_idx = 1;
+        
+        // Find the position of "moves" in args
+        let moves_pos = args.iter().position(|&r| r == "moves");
 
         let mut position = match args[0] {
             "startpos" => Position::default(&uci_options),
             "fen" => {
-                moves_idx += 1;
-                Position::new(&args[1..].join(" "), &uci_options)
+                if let Some(moves_idx) = moves_pos {
+                    let fen_str = &args[1..moves_idx+1].join(" ");
+                    Position::new(&fen_str, &uci_options)
+                } else {
+                    let fen_str = &args[1..].join(" ");
+                    Position::new(&fen_str, &uci_options)
+                }
+                
             }
             _ => Position::default(&uci_options),
         };
 
         let mut mv: Move;
-        if args.len() > moves_idx && args[moves_idx] == "moves" {
+        if let Some(moves_idx) = moves_pos {
             for mv_str in &args[moves_idx + 1..] {
                 mv = Move::from_str(mv_str).unwrap();
-                match position.board.try_play(mv) {
-                    Err(e) => println!("{:?}", e),
-                    _ => (),
-                };
+                position.board.play(mv);
             }
         }
 
