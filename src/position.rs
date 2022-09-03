@@ -35,6 +35,14 @@ impl Position {
         }
     }
 
+    pub fn new_uci(fen: &str) -> Position {
+        Position {
+            board: Self::from_fen(fen, false),
+            board_stack: vec![],
+            evaluator: Evaluator::default(),
+        }
+    }
+
     fn from_fen(fen: &str, chess960: bool) -> Board {
         match Board::from_fen(fen, chess960) {
             Ok(board) => board,
