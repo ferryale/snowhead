@@ -1,6 +1,6 @@
 use core::ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign};
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Value(pub i16);
 
 #[derive(Debug, Clone, Copy)]
