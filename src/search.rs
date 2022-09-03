@@ -2,6 +2,7 @@ use crate::evaluate::score::Value;
 use crate::position::Position;
 use crate::timeman::TimeManager;
 use crate::uci::command::GoOptions;
+use crate::movegen::movepick::MovePicker;
 use cozy_chess::{Board, Move};
 use std::time::{Duration, SystemTime};
 
@@ -214,16 +215,18 @@ pub fn alphabeta(
     }
 
     // Generate all moves
-    let mut move_list: Vec<Move> = vec![];
-    pos.board.generate_moves(|piece_moves| {
-        for mv in piece_moves {
-            move_list.push(mv);
-        }
-        false
-    });
-
+    // let mut move_list: Vec<Move> = vec![];
+    // pos.board.generate_moves(|piece_moves| {
+    //     for mv in piece_moves {
+    //         move_list.push(mv);
+    //     }
+    //     false
+    // });
+    let mut mpick = MovePicker::new();
+    
     // Iterate through the moves
-    for mv in move_list {
+    //for mv in move_list {
+    while let Some(mv) = mpick.next_move(pos, false) {
         pos.do_move(mv);
         eval = -alphabeta(
             pos,
@@ -274,17 +277,23 @@ pub fn qsearch(
     }
 
     // Generate captures
-    let mut move_list: Vec<Move> = vec![];
-    pos.board.generate_moves(|mut piece_moves| {
-        piece_moves.to &= pos.board.colors(!pos.board.side_to_move());
-        for mv in piece_moves {
-            move_list.push(mv);
-        }
-        false
-    });
+    // let mut move_list: Vec<Move> = vec![];
+    // pos.board.generate_moves(|mut piece_moves| {
+    //     piece_moves.to &= pos.board.colors(!pos.board.side_to_move());
+    //     for mv in piece_moves {
+    //         move_list.push(mv);
+    //     }
+    //     false
+    // });
+
+    let mut mpick = MovePicker::new();
+    
+    // Iterate through the moves
+    //for mv in move_list {
+    
 
     // Iterate through the moves
-    for mv in move_list {
+    while let Some(mv) = mpick.next_move(pos, true) {
         pos.do_move(mv);
         eval = -qsearch(
             pos,

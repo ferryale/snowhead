@@ -27,7 +27,7 @@ impl Stage {
         Stage::Init
 
     }
-    pub fn next(&mut self) {
+    pub fn next(&mut self, skip_quiets: bool) {
         match self {
             Stage::Init => *self = Stage::PvMove,
             Stage::PvMove => *self = Stage::KillerOne,
@@ -35,7 +35,13 @@ impl Stage {
             Stage::KillerTwo => *self = Stage::CounterMove,
             Stage::CounterMove => *self = Stage::GenCaptures,
             Stage::GenCaptures => *self = Stage::GoodCaptures,
-            Stage::GoodCaptures => *self = Stage::GenQuiet,
+            Stage::GoodCaptures => {
+                if skip_quiets {
+                    *self = Stage::BadCaptures;
+                } else {
+                    *self = Stage::GenQuiet;
+                }
+            },
             Stage::GenQuiet => *self = Stage::Quiet,
             Stage::Quiet => *self = Stage::BadCaptures,
             Stage::BadCaptures => {},
@@ -65,42 +71,42 @@ impl MovePicker {
         }
     }
 
-    pub fn next_move(&mut self, pos: &Position) -> Option<Move> {
+    pub fn next_move(&mut self, pos: &Position, skip_quiets: bool) -> Option<Move> {
         loop { 
             match self.stage {
                 Stage::Init => {
-                    println!("{:?}", self.stage);
-                    self.next_stage();
+                    //println!("{:?}", self.stage);
+                    self.next_stage(skip_quiets);
                 },
                 Stage::PvMove => {
-                    println!("{:?}", self.stage);
-                    self.next_stage();
+                    //println!("{:?}", self.stage);
+                    self.next_stage(skip_quiets);
                 },
                 Stage::KillerOne => {
-                    println!("{:?}", self.stage);
-                    self.next_stage();
+                    //println!("{:?}", self.stage);
+                    self.next_stage(skip_quiets);
                 },
                 Stage::KillerTwo => {
-                    println!("{:?}", self.stage);
-                    self.next_stage();
+                    //println!("{:?}", self.stage);
+                    self.next_stage(skip_quiets);
                 },
                 Stage::CounterMove => {
-                    println!("{:?}", self.stage);
-                    self.next_stage();
+                    //println!("{:?}", self.stage);
+                    self.next_stage(skip_quiets);
                 },
                 Stage::GenCaptures => {
-                    println!("{:?}", self.stage);
+                    //println!("{:?}", self.stage);
                     self.move_values = generate_captures(&pos);
                     // println!("{:?}", self.num_moves());
 
                     self.start_quiet = self.move_values.size();
-                    self.next_stage();
+                    self.next_stage(skip_quiets);
                 },
                 Stage::GoodCaptures => {
                     // println!("{:?}", self.stage);
                     // println!("{}", self.move_values);
                     match self.move_values.next() {
-                        None => self.next_stage(),
+                        None => self.next_stage(skip_quiets),
                         Some(move_value) => {
                             //println!("{}", move_value);
                             if move_value.value() >= Value::ZERO {
@@ -110,7 +116,7 @@ impl MovePicker {
                                 // Decrement current since the bad capture will not be returned
                                 self.decr_current(1);
                                 self.start_bad_captures = self.current();
-                                self.next_stage();
+                                self.next_stage(skip_quiets);
                             }
                         }
                     };
@@ -119,14 +125,14 @@ impl MovePicker {
                 Stage::GenQuiet => {
                     self.move_values.extend(&generate_quiet(&pos));
                     self.set_current(self.start_quiet);
-                    self.next_stage();
+                    self.next_stage(skip_quiets);
                 },
                 
                 Stage::Quiet => {
                     match self.move_values.next() {
                         None => {
                             self.set_current(self.start_bad_captures);
-                            self.next_stage();
+                            self.next_stage(skip_quiets);
                         }
                         Some(move_value) => {
                             return Some(move_value.chess_move());
@@ -150,8 +156,8 @@ impl MovePicker {
         None
     }
 
-    fn next_stage(&mut self) {
-        self.stage.next();
+    fn next_stage(&mut self, skip_quiets: bool) {
+        self.stage.next(skip_quiets);
     }
 
     fn current(&mut self) -> usize {
@@ -162,9 +168,9 @@ impl MovePicker {
         self.move_values.set_idx(idx);
     }
 
-    fn incr_current(&mut self, idx: usize) {
-        self.move_values.incr_idx(idx);
-    }
+    // fn incr_current(&mut self, idx: usize) {
+    //     self.move_values.incr_idx(idx);
+    // }
 
     fn decr_current(&mut self, idx: usize) {
         self.move_values.decr_idx(idx);

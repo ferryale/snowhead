@@ -70,9 +70,9 @@ impl<const N: usize> fmt::Display for MoveValues<N> {
         // operation succeeded or failed. Note that `write!` uses syntax which
         // is very similar to `println!`.
         for idx in 0..self.size {
-            write!(f, "{}", self.list[idx]);
+            write!(f, "{}", self.list[idx]).unwrap();
             if idx < self.size-1 {
-                write!(f, "\n");
+                write!(f, "\n").unwrap();
             }
         }
         Ok(())
@@ -194,9 +194,9 @@ impl<const N: usize> MoveValues<N> {
         self.idx = idx;
     }
 
-    pub fn incr_idx(&mut self, incr: usize) {
-        self.idx+= incr;
-    }
+    // pub fn incr_idx(&mut self, incr: usize) {
+    //     self.idx+= incr;
+    // }
 
     pub fn decr_idx(&mut self, incr: usize) {
         self.idx-= incr;
