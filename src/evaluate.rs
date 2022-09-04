@@ -1,5 +1,5 @@
 use self::psqt::PsqTable;
-use self::score::{Phase, Score, Value};
+use self::score::{Phase, Score};
 use cozy_chess::{Board, Color, File, Piece, Rank, Move, Square};
 
 pub mod psqt;
@@ -10,7 +10,6 @@ pub struct Evaluator {
     pub psq_tables: [PsqTable; Color::NUM],
     pub psq: Score,
     psq_stack: Vec<Score>,
-    pub prev_psq: Score,
 }
 
 impl Evaluator {
@@ -19,11 +18,9 @@ impl Evaluator {
         sq_tables: &[[[[i16; Phase::NUM]; File::NUM]; Rank::NUM]; Piece::NUM],
     ) -> Evaluator {
         let psqt = PsqTable::new(pc_table, sq_tables);
-
         Evaluator {
             psq_tables: [psqt, !psqt],
             psq: Score::ZERO,
-            prev_psq: Score::ZERO,
             psq_stack: vec![],
         }
     }
@@ -37,7 +34,6 @@ impl Evaluator {
         Evaluator {
             psq_tables: [PsqTable::default(), !PsqTable::default()],
             psq: Score::ZERO,
-            prev_psq: Score::ZERO,
             psq_stack: vec![],
         }
     }
@@ -49,15 +45,10 @@ impl Evaluator {
         for sq in board.occupied() {
             pc = board.piece_on(sq).unwrap();
             c = board.color_on(sq).unwrap();
-            //c = board.side_to_move();
             self.psq += self.probe_psqt(c, pc, sq);
         }
 
     }
-
-    // pub fn update_psq(&self, board: &Board) {
-
-    // }
 
     pub fn evaluate(&self, board: &Board) -> Score {
         let mut score = Score::ZERO;
@@ -77,28 +68,8 @@ impl Evaluator {
         
     }
 
-    // pub fn evaluate(&self) -> Value {
-    //     self.psq[0]
-    //     // let mut score = Score::ZERO;
-    //     // let mut pc: Piece;
-    //     // let mut c: Color;
-    //     // for sq in board.occupied() {
-    //     //     pc = board.piece_on(sq).unwrap();
-    //     //     c = board.color_on(sq).unwrap();
-    //     //     score += self.psq_tables[c as usize].probe(&pc, &sq);
-    //     // }
-    //     // score.values[0]
-    // }
-
-    // pub fn do_move(&mut self, board: &Board, mv: Move) {
-    //     let color = board.side_to_move();
-    //     let pc_from = board.piece_on(mv.from).unwrap();
-    //     self.psq += self.psq_tables[color as usize].probe(&pc_from, &sq);
-    // }
-
     pub fn do_move(&mut self, board: &Board, mv: Move, next_board: &Board) {
         let c = board.side_to_move();
-        //let c = board.color_on(mv.from).unwrap();
         let pc_from = board.piece_on(mv.from).unwrap();
         let pc_to = board.piece_on(mv.to);
 
@@ -106,23 +77,17 @@ impl Evaluator {
                             Square::new(ep, Rank::Sixth.relative_to(c))
                         });
 
-        //println!("{} {:?} {} {}", pc_from, pc_to, mv.from, mv.to);
         let is_castling = board.colors(c).has(mv.to);
         let is_enpassant = Some(mv.to) == ep_square;
-        //self.psq = self.evaluate(next_board);
 
         self.psq_stack.push(self.psq.clone());
         
         if is_castling || is_enpassant {
             self.eval_psq(next_board);
-            //println!("{mv} {is_castling} {is_enpassant}");
         } else {
             if let Some(captured) = pc_to {
                 self.psq -= self.probe_psqt(!c, captured, mv.to);
-                //println!("{mv} capt {captured}");
-                //self.psq = self.evaluate(next_board);
             } 
-            //println!("{mv} {:?} {:?}", self.probe_psqt(c, pc_from, mv.to), self.probe_psqt(c, pc_from, mv.from));
             
             if let Some(promoted) = mv.promotion {
                 self.psq += self.probe_psqt(c, promoted, mv.to) - self.probe_psqt(c, pc_from, mv.from);
@@ -130,20 +95,13 @@ impl Evaluator {
                 self.psq += self.probe_psqt(c, pc_from, mv.to) - self.probe_psqt(c, pc_from, mv.from);
 
             }
-            //self.eval_psq(next_board);
 
         }
-            
-        
-
-        
-
+             
     }
 
     pub fn undo_move(&mut self) {
         self.psq = self.psq_stack.pop().unwrap();
-
-
     }
 
 
@@ -166,13 +124,11 @@ mod tests{
                 let (wsq, bsq) = sq_tuple;
                 let score1 = evaluator.probe_psqt(Color::White, pc, wsq);
                 let score2 = evaluator.probe_psqt(Color::Black, pc, bsq);
-                assert_eq!(score1, -score2);
                 println!("{score1:?} {score2:?}");
+                assert_eq!(score1, -score2);
+                
             }
         }
-        
-        
-       
     }
 
     #[test]

@@ -63,7 +63,6 @@ impl Position {
 
     pub fn do_move(&mut self, mv: Move) {
         let board = self.board.clone();
-        
         self.board.play_unchecked(mv);
         self.evaluator.do_move(&board, mv, &self.board);
         self.board_stack.push(board);
@@ -79,7 +78,6 @@ impl Position {
     }
 
     pub fn eval(&self) -> Value {
-
         if self.board.side_to_move() == Color::White {
             self.psq().values[0]
         } else {
