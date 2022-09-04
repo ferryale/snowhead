@@ -1,13 +1,13 @@
-use crate::evaluate::score::Value;
+use crate::evaluate::score::{Value, Score};
 use crate::evaluate::Evaluator;
 use crate::uci::option::UciOptions;
-use cozy_chess::{Board, Move};
+use cozy_chess::{Color, Board, Move};
 
 #[derive(Debug, Clone)]
 pub struct Position {
     pub board: Board,
     board_stack: Vec<Board>,
-    evaluator: Evaluator,
+    pub evaluator: Evaluator,
 }
 
 impl Position {
@@ -43,6 +43,14 @@ impl Position {
         }
     }
 
+    pub fn set(fen: &str, chess960: bool) -> Position {
+        Position {
+            board: Self::from_fen(fen, chess960),
+            board_stack: vec![],
+            evaluator: Evaluator::default(),
+        }
+    }
+
     fn from_fen(fen: &str, chess960: bool) -> Board {
         match Board::from_fen(fen, chess960) {
             Ok(board) => board,
@@ -54,15 +62,42 @@ impl Position {
     }
 
     pub fn do_move(&mut self, mv: Move) {
-        self.board_stack.push(self.board.clone());
+        let board = self.board.clone();
+        
         self.board.play_unchecked(mv);
+        self.evaluator.do_move(&board, mv, &self.board);
+        self.board_stack.push(board);
     }
 
     pub fn undo_move(&mut self) {
         self.board = self.board_stack.pop().unwrap();
+        self.evaluator.undo_move();
     }
 
     pub fn evaluate(&self) -> Value {
-        self.evaluator.evaluate(&self.board)
+        self.evaluator.evaluate(&self.board).values[0]
+    }
+
+    pub fn eval(&self) -> Value {
+
+        if self.board.side_to_move() == Color::White {
+            self.psq().values[0]
+        } else {
+            -self.psq().values[0]
+        }
+        
+    }
+
+    pub fn psq(&self) -> Score {
+        self.evaluator.psq
+    }
+
+    pub fn eval_psq(&mut self) -> Score {
+        self.evaluator.eval_psq(&self.board);
+        self.psq()
+    }
+
+    pub fn init_psq(&mut self) {
+        self.evaluator.eval_psq(&self.board);
     }
 }

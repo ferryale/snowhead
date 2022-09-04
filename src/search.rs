@@ -167,6 +167,7 @@ impl SearchThread {
 
         while depth <= max_depth {
             start_time = TimeManager::current();
+            pos.init_psq();
             self.eval = alphabeta(pos, 0, depth, alpha, beta, &mut pv, self);
             self.pv = pv;
 
@@ -201,7 +202,7 @@ pub fn alphabeta(
 ) -> Value {
     let mut eval: Value;
     let mut child_pv = PrincipalVariation::new();
-
+    
     // Increment node counter
     if thread.ss.len() <= ply as usize {
         thread.ss.push(SearchStack::new());
@@ -268,7 +269,7 @@ pub fn qsearch(
     thread.ss[ply as usize].node_count += 1;
 
     // Evaluate the position
-    let mut eval = pos.evaluate();
+    let mut eval = pos.eval();
     if eval >= beta {
         return beta;
     }
