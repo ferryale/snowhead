@@ -6,7 +6,7 @@ pub struct Value(pub i16);
 #[derive(Debug, Clone, Copy)]
 pub struct Phase(pub u32);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Score {
     pub values: [Value; Phase::NUM],
 }
