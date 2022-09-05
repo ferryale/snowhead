@@ -118,7 +118,11 @@ impl<const N: usize> MoveValues<N> {
     pub fn push(&mut self, move_value: MoveValue) {
         self.list[self.size] = move_value;
         self.size += 1;
-        
+    }
+
+    pub fn insert(&mut self, move_value: MoveValue) {
+        self.list[self.size] = move_value;
+        self.idx += 1;
     }
 
     pub fn push_sort(&mut self, move_value: MoveValue) {
@@ -150,7 +154,9 @@ impl<const N: usize> MoveValues<N> {
     }
 
     pub fn sort(&mut self) {
-        self.list.sort();
+        self.list[0..self.size].sort();
+        self.list[0..self.size].reverse();
+        self.idx = 0;
     }
 
     pub fn extend(&mut self, other: &MoveValues<N>) {
@@ -200,6 +206,12 @@ impl<const N: usize> MoveValues<N> {
 
     pub fn decr_idx(&mut self, incr: usize) {
         self.idx-= incr;
+    }
+    pub fn print(&self) {
+        for idx in 0..self.size {
+            print!("{}:{:?}, ", self.list[idx].mv, self.list[idx].value.0);
+        }
+        println!("\n");
     }
     
 }

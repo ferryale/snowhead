@@ -2,12 +2,13 @@ use crate::evaluate::score::Value;
 use crate::position::Position;
 use crate::timeman::TimeManager;
 use crate::uci::command::GoOptions;
-use crate::movegen::movepick::MovePicker;
+use crate::movegen::movepick::{MovePicker, MAX_MOVES};
+use crate::movegen::movevalue::{MoveValue, MoveValues};
 use cozy_chess::{Board, Move};
 use std::time::{Duration, SystemTime};
 
 pub const MAX_PLY: u32 = 128;
-pub const MAX_MOVES: u32 = 128;
+
 
 #[derive(Debug, Clone, Copy)]
 pub struct PrincipalVariation {
@@ -63,6 +64,7 @@ pub struct SearchThread {
     go_options: GoOptions,
     time_manager: TimeManager,
     eval: Value,
+    pub root_moves: MoveValues<MAX_MOVES>
 }
 
 #[derive(Debug)]
@@ -84,6 +86,7 @@ impl SearchThread {
             go_options: go_options,
             time_manager: time_manager,
             eval: Value::ZERO,
+            root_moves: MoveValues::<MAX_MOVES>::new()
         }
     }
 
@@ -170,6 +173,13 @@ impl SearchThread {
             pos.init_psq();
             self.eval = alphabeta(pos, 0, depth, alpha, beta, &mut pv, self);
             self.pv = pv;
+            
+            
+            self.root_moves.sort();
+            //self.root_moves.print();
+
+            
+            //self.root_moves.print();
 
             iter_time = TimeManager::elapsed_since(start_time);
             node_ratio = std::cmp::min(self.nodes() / prev_nodes, 5);
@@ -202,6 +212,7 @@ pub fn alphabeta(
 ) -> Value {
     let mut eval: Value;
     let mut child_pv = PrincipalVariation::new();
+    let root_node = ply == 0;
     
     // Increment node counter
     if thread.ss.len() <= ply as usize {
@@ -218,7 +229,17 @@ pub fn alphabeta(
     let mut mpick = MovePicker::new();
     
     // Iterate through the moves
-    while let Some(mv) = mpick.next_move(pos, false) {
+    loop {
+        let mv_option = if root_node && depth > 1 {
+            let tmp = thread.root_moves.next_move();
+            thread.root_moves.decr_idx(1);
+            tmp
+            //mpick.next_move(pos, false)
+        } else {
+            mpick.next_move(pos, false)
+        };
+        if mv_option.is_none() {break ;}
+        let mv = mv_option.unwrap();
         pos.do_move(mv);
         eval = -alphabeta(
             pos,
@@ -237,8 +258,20 @@ pub fn alphabeta(
         if eval > alpha {
             alpha = eval;
             pv.update(&mv, &child_pv);
+            
         }
+        if root_node {
+            if depth == 1 {
+                thread.root_moves.push(MoveValue::new(mv, alpha));
+            } else {
+                thread.root_moves.insert(MoveValue::new(mv, alpha));
+            }
+            
+            
+        } 
+
     }
+    
     alpha
 }
 
