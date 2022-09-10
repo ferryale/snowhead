@@ -18,12 +18,12 @@ impl Value {
     pub const MATE: Value = Value(32000);
     pub const INFINITE: Value = Value(32001);
 
-    pub fn mate_in(ply: i32) -> Value {
-        Value::MATE - ply
+    pub fn mate_in(ply: u32) -> Value {
+        Value::MATE - ply as i32
     }
 
-    pub fn mated_in(ply: i32) -> Value {
-        -Value::MATE + ply
+    pub fn mated_in(ply: u32) -> Value {
+        -Value::MATE + ply as i32
     }
 
 }

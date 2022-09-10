@@ -82,7 +82,7 @@ pub fn alphabeta(
         if pos.board.checkers().is_empty() {
             return Value::DRAW;
         } else {
-            return Value::mated_in(ply as i32);
+            return Value::mated_in(ply);
         } 
     }
 
@@ -148,7 +148,7 @@ pub fn qsearch(
         since not all moves are generated in qsearch.
     */
     if num_moves == 0 && pos.is_check() {
-        return Value::mated_in(ply as i32);
+        return Value::mated_in(ply);
     } 
     alpha
 }
