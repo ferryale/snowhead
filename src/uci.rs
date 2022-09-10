@@ -34,11 +34,15 @@ impl Uci {
             let uci_command = UciCommand::parse(&mut uci_options)?;
 
             match uci_command {
-                UciCommand::Uci => {}
+                UciCommand::Uci => {
+                    println!("id name Snowhead v0.2.0");
+                    println!("uciok");
+                }
                 UciCommand::Debug => {}
                 UciCommand::Display => println!("{}", position.board),
                 UciCommand::IsReady => println!("readyok"),
                 UciCommand::SetOption(uci_options) => println!("{:?}", uci_options),
+                UciCommand::UciNewGame => {},
                 UciCommand::Position(pos) => {
                     position = pos;
                 }

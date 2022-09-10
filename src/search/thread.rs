@@ -124,7 +124,7 @@ impl SearchThread {
 
         let mut depth = 1;
 
-        while depth <= max_depth {
+        while depth <= 5 {
             start_time = TimeManager::current();
             pos.init_psq();
             //self.init_stacks();

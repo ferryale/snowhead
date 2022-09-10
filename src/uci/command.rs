@@ -1,17 +1,19 @@
 use super::option::UciOptions;
 use crate::position::Position;
-use cozy_chess::{Color, Move};
+use cozy_chess::{Color, Move, Square, Board, File, Piece};
 use std::collections::HashMap;
 use std::io;
 use std::str::FromStr;
 
 #[derive(Debug)]
+// http://wbec-ridderkerk.nl/html/UCIProtocol.html
 pub enum UciCommand {
     Uci,
     Debug,
     Display,
     IsReady,
     SetOption(UciOptions),
+    UciNewGame,
     Position(Position),
     Go(GoOptions),
     Stop,
@@ -32,12 +34,17 @@ impl UciCommand {
             let cmd_args = tokens[1..].to_vec();
 
             match cmd_string {
-                "quit" => UciCommand::Quit,
+                "uci" => UciCommand::Uci,
+                "debug" => UciCommand::Debug,
                 "d" => UciCommand::Display,
+                "isready" => UciCommand::IsReady,
+                "setoption" => uci_options.parse(cmd_args)?,
+                "ucinewgame" => UciCommand::UciNewGame,
                 "position" => Position::parse(cmd_args, &uci_options),
                 "go" => GoOptions::parse(cmd_args),
-                "setoption" => uci_options.parse(cmd_args)?,
                 "stop" => UciCommand::Stop,
+                "ponderhit" => UciCommand::Ponderhit,
+                "quit" => UciCommand::Quit,
                 _ => UciCommand::Invalid(String::from(cmd_string)),
             }
         } else {
@@ -127,11 +134,40 @@ impl Position {
         let mut mv: Move;
         if let Some(moves_idx) = moves_pos {
             for mv_str in &args[moves_idx + 1..] {
-                mv = Move::from_str(mv_str).unwrap();
+                //mv = Move::from_str(mv_str).unwrap();
+                mv = mv_str.parse().unwrap();
+                convert_move(&mut mv, &position.board, uci_options.chess960);
                 position.board.play(mv);
             }
         }
 
         UciCommand::Position(position)
+    }
+}
+
+pub fn convert_move_to_uci(make_move: &mut Move, board: &Board, chess960: bool) {
+    if !chess960 && board.color_on(make_move.from) == board.color_on(make_move.to) {
+        let rights = board.castle_rights(board.side_to_move());
+        let file = if Some(make_move.to.file()) == rights.short {
+            File::G
+        } else {
+            File::C
+        };
+        make_move.to = Square::new(file, make_move.to.rank());
+    }
+}
+
+fn convert_move(make_move: &mut Move, board: &Board, chess960: bool) {
+    let convert_castle = !chess960
+        && board.piece_on(make_move.from) == Some(Piece::King)
+        && make_move.from.file() == File::E
+        && matches!(make_move.to.file(), File::C | File::G);
+    if convert_castle {
+        let file = if make_move.to.file() == File::C {
+            File::A
+        } else {
+            File::H
+        };
+        make_move.to = Square::new(file, make_move.to.rank());
     }
 }
