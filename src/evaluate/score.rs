@@ -25,7 +25,6 @@ impl Value {
     pub fn mated_in(ply: u32) -> Value {
         -Value::MATE + ply as i32
     }
-
 }
 
 impl Phase {
@@ -180,7 +179,6 @@ impl Mul<Phase> for Score {
         ret
     }
 }
-
 
 impl Add<i32> for Value {
     type Output = Self;

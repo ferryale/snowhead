@@ -97,6 +97,10 @@ impl Evaluator {
         }
     }
 
+    pub fn do_null_move(&mut self) {
+        self.psq_stack.push(self.psq.clone());
+    }
+
     pub fn undo_move(&mut self) {
         self.psq = self.psq_stack.pop().unwrap();
     }

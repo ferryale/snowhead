@@ -36,6 +36,25 @@ pub fn alphabeta(
         return qsearch(pos, ply, depth, alpha, beta, &mut child_pv, thread);
     }
 
+    // Null move pruning
+    let played_null = pos.do_null_move();
+    if played_null {
+        eval = -alphabeta(
+            pos,
+            ply + 1,
+            depth - 4,
+            -beta,
+            -beta + 1,
+            &mut child_pv,
+            thread,
+        );
+        pos.undo_move();
+        if eval >= beta {
+            return beta;
+        }
+    }
+
+    // Init movepicker
     let mut mpick = MovePicker::new();
 
     // Iterate through the moves
@@ -83,7 +102,7 @@ pub fn alphabeta(
             return Value::DRAW;
         } else {
             return Value::mated_in(ply);
-        } 
+        }
     }
 
     alpha
@@ -142,14 +161,14 @@ pub fn qsearch(
         }
     }
 
-    /*  If there are no moves at this point and we are in check, it is checkmate, 
+    /*  If there are no moves at this point and we are in check, it is checkmate,
         since all evasions have been generated.
         If there are no moves and we are not in check, it is not necessarily stalemate,
         since not all moves are generated in qsearch.
     */
     if num_moves == 0 && pos.is_check() {
         return Value::mated_in(ply);
-    } 
+    }
     alpha
 }
 

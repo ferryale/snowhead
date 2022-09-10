@@ -42,6 +42,10 @@ impl SearchThread {
         }
     }
 
+    fn init_stacks(&mut self) {
+        self.ss = vec![];
+    }
+
     fn depth(&self) -> usize {
         self.pv.len()
     }
@@ -94,17 +98,17 @@ impl SearchThread {
             "info depth {} seldepth {} time {} nodes {} nps {} score {} pv {}",
             self.depth(),
             self.seldepth(),
-            iter_time.as_millis(),
+            self.elapsed_time().as_millis(),
             self.nodes(),
-            self.nps(iter_time),
+            self.nps(self.elapsed_time()),
             self.score(),
             self.pv()
         )
     }
 
     pub fn search(&mut self, pos: &mut Position) {
-        let alpha = -Value(30000);
-        let beta = Value(30000);
+        let alpha = -Value::INFINITE;
+        let beta = Value::INFINITE;
         let mut pv = PrincipalVariation::new();
         let mut prev_nodes = 1;
         let mut start_time: SystemTime;
@@ -123,6 +127,8 @@ impl SearchThread {
         while depth <= max_depth {
             start_time = TimeManager::current();
             pos.init_psq();
+            //self.init_stacks();
+
             self.eval = alphabeta(pos, 0, depth, alpha, beta, &mut pv, self);
             self.pv = pv;
 

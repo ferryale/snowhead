@@ -1,7 +1,7 @@
 use crate::evaluate::score::{Score, Value};
 use crate::evaluate::Evaluator;
 use crate::uci::option::UciOptions;
-use cozy_chess::{Board, Color, Move, Piece, Rank, Square, GameStatus};
+use cozy_chess::{Board, Color, GameStatus, Move, Piece, Rank, Square};
 
 #[derive(Debug, Clone)]
 pub struct Position {
@@ -70,6 +70,17 @@ impl Position {
     pub fn undo_move(&mut self) {
         self.board = self.board_stack.pop().unwrap();
         self.evaluator.undo_move();
+    }
+
+    pub fn do_null_move(&mut self) -> bool {
+        if let Some(new_board) = self.board.null_move() {
+            self.board_stack.push(self.board.clone());
+            self.evaluator.do_null_move();
+            self.board = new_board;
+            true
+        } else {
+            false
+        }
     }
 
     pub fn evaluate(&self) -> Value {
