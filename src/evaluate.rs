@@ -48,24 +48,7 @@ impl Evaluator {
         }
     }
 
-    // pub fn evaluate(&self, board: &Board) -> Score {
-    //     let mut score = Score::ZERO;
-    //     let mut pc: Piece;
-    //     let mut c: Color;
-    //     for sq in board.occupied() {
-    //         pc = board.piece_on(sq).unwrap();
-    //         c = board.color_on(sq).unwrap();
-    //         score += self.probe_psqt(c, pc, sq);
-    //     }
-
-    //     if board.side_to_move() == Color::White {
-    //         score
-    //     } else {
-    //         -score
-    //     }
-    // }
-
-    pub fn do_move(&mut self, board: &Board, mv: Move, next_board: &Board) {
+    pub fn do_move(&mut self, board: &Board, mv: Move) {
         let c = board.side_to_move();
         let pc_from = board.piece_on(mv.from).unwrap();
         let pc_to = board.piece_on(mv.to);
@@ -79,10 +62,27 @@ impl Evaluator {
 
         self.psq_stack.push(self.psq.clone());
 
-        if is_castling || is_enpassant {
-            self.eval_psq(next_board);
+        if is_castling {
+            let (kfile, rfile) = if mv.from.file() < mv.to.file() {
+                // Short castle
+                (File::G, File::F)
+            } else {
+                // Long castle
+                (File::C, File::D)
+            };
+            let our_back_rank = Rank::First.relative_to(c);
+            let kto = Square::new(kfile, our_back_rank);
+            let rto = Square::new(rfile, our_back_rank);
+            self.psq +=
+                self.probe_psqt(c, Piece::King, kto) - self.probe_psqt(c, Piece::King, mv.from);
+            self.psq +=
+                self.probe_psqt(c, Piece::Rook, rto) - self.probe_psqt(c, Piece::Rook, mv.to);
         } else {
-            if let Some(captured) = pc_to {
+            if is_enpassant {
+                let capsq = Square::new(mv.to.file(), Rank::Fifth.relative_to(c));
+                let captured = board.piece_on(capsq).unwrap();
+                self.psq -= self.probe_psqt(!c, captured, capsq);
+            } else if let Some(captured) = pc_to {
                 self.psq -= self.probe_psqt(!c, captured, mv.to);
             }
 
@@ -106,7 +106,7 @@ mod tests {
     use super::Evaluator;
     use crate::bench::epd::EpdEntry;
     use crate::position::Position;
-    use cozy_chess::{Board, Color, Move, Piece, Square};
+    use cozy_chess::{Color, Move, Piece, Square};
     use std::fs;
 
     #[test]

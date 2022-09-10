@@ -1,6 +1,5 @@
-use crate::movegen::movepick::{MAX_MOVES};
-use cozy_chess::{Move};
-
+use crate::movegen::movepick::MAX_MOVES;
+use cozy_chess::Move;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PrincipalVariation {

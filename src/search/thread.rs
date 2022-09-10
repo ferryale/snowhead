@@ -1,12 +1,11 @@
+use super::alphabeta;
+use super::pv::PrincipalVariation;
+use super::rootmoves::RootMoves;
 use crate::evaluate::score::Value;
-use super::rootmoves::{RootMoves};
-use super::pv::{PrincipalVariation};
 use crate::position::Position;
 use crate::timeman::TimeManager;
 use crate::uci::command::GoOptions;
-use super::alphabeta;
 use std::time::{Duration, SystemTime};
-
 
 pub const MAX_PLY: u32 = 128;
 

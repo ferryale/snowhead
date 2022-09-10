@@ -1,13 +1,13 @@
-use crate::evaluate::score::Value;
-use crate::movegen::movepick::{MovePicker};
-use crate::movegen::movevalue::{MoveValue};
-use self::pv::{PrincipalVariation};
+use self::pv::PrincipalVariation;
 use self::thread::{SearchStack, SearchThread};
+use crate::evaluate::score::Value;
+use crate::movegen::movepick::MovePicker;
+use crate::movegen::movevalue::MoveValue;
 use crate::position::Position;
-use cozy_chess::{Board};
+use cozy_chess::Board;
 
-pub mod rootmoves;
 pub mod pv;
+pub mod rootmoves;
 pub mod thread;
 
 pub fn alphabeta(
@@ -70,9 +70,7 @@ pub fn alphabeta(
             pv.update(&mv, &child_pv);
         }
         if root_node {
-
             thread.root_moves.insert(MoveValue::new(mv, alpha), depth);
-          
         }
     }
 

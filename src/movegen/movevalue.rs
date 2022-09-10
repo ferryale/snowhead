@@ -193,7 +193,7 @@ impl<const N: usize> MoveValues<N> {
     }
 
     pub fn incr_idx(&mut self, incr: usize) {
-        self.idx+= incr;
+        self.idx += incr;
     }
 
     pub fn decr_idx(&mut self, incr: usize) {

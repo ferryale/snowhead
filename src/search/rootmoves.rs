@@ -1,18 +1,17 @@
+use crate::movegen::movepick::MAX_MOVES;
 use crate::movegen::movevalue::{MoveValue, MoveValues};
-use crate::movegen::movepick::{MAX_MOVES};
-use cozy_chess::{Move};
+use cozy_chess::Move;
 
 #[derive(Debug)]
 pub struct RootMoves {
-    move_values: MoveValues<MAX_MOVES>
+    move_values: MoveValues<MAX_MOVES>,
 }
 
 impl RootMoves {
     pub fn new() -> RootMoves {
         RootMoves {
-            move_values: MoveValues::new()
+            move_values: MoveValues::new(),
         }
-        
     }
 
     pub fn list(&self) -> [MoveValue; MAX_MOVES] {
@@ -73,7 +72,6 @@ impl RootMoves {
         let next = self.move_values.next();
         self.decr_idx(1);
         next
-
     }
 
     pub fn next_move(&mut self) -> Option<Move> {
@@ -85,6 +83,4 @@ impl RootMoves {
     pub fn print(&self) {
         self.move_values.print();
     }
-
-
 }
