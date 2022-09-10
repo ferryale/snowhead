@@ -13,6 +13,19 @@ pub struct Score {
 
 impl Value {
     pub const ZERO: Value = Value(0);
+    pub const DRAW: Value = Value(0);
+    pub const KNOWN_WIN: Value = Value(10000);
+    pub const MATE: Value = Value(32000);
+    pub const INFINITE: Value = Value(32001);
+
+    pub fn mate_in(ply: i32) -> Value {
+        Value::MATE - ply
+    }
+
+    pub fn mated_in(ply: i32) -> Value {
+        -Value::MATE + ply
+    }
+
 }
 
 impl Phase {
@@ -25,9 +38,13 @@ impl Phase {
     pub const BISHOP: Phase = Phase(2);
     pub const ROOK: Phase = Phase(4);
     pub const QUEEN: Phase = Phase(8);
-    pub const ALL: [Phase; 5] = [Phase::PAWN, Phase::KNIGHT, Phase::BISHOP, Phase::ROOK, Phase::QUEEN];
-
-
+    pub const ALL: [Phase; 5] = [
+        Phase::PAWN,
+        Phase::KNIGHT,
+        Phase::BISHOP,
+        Phase::ROOK,
+        Phase::QUEEN,
+    ];
 }
 
 impl Score {
@@ -161,6 +178,21 @@ impl Mul<Phase> for Score {
             ret.values[idx] = self.values[idx] * rhs;
         }
         ret
+    }
+}
+
+
+impl Add<i32> for Value {
+    type Output = Self;
+    fn add(self, rhs: i32) -> Self::Output {
+        Value(self.0 + rhs as i16)
+    }
+}
+
+impl Sub<i32> for Value {
+    type Output = Self;
+    fn sub(self, rhs: i32) -> Self::Output {
+        Value(self.0 - rhs as i16)
     }
 }
 

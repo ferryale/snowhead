@@ -1,9 +1,7 @@
 use crate::evaluate::score::{Score, Value};
 use crate::evaluate::Evaluator;
 use crate::uci::option::UciOptions;
-use cozy_chess::{Board, Color, Move, Piece, Rank, Square};
-
-
+use cozy_chess::{Board, Color, Move, Piece, Rank, Square, GameStatus};
 
 #[derive(Debug, Clone)]
 pub struct Position {
@@ -135,21 +133,39 @@ impl Position {
         self.board.pieces(pc).len()
     }
 
-    pub fn has_repeated(&self) {
-        let hash = self.hash();
-        self.boards
+    pub fn is_draw(&self, ply: u32) -> bool {
+        self.insufficient_material()
+            || self.has_repeated(ply)
+            || (self.board.halfmove_clock() >= 100
+                && (self.board.checkers().is_empty() || self.board.status() != GameStatus::Won))
+    }
+
+    fn has_repeated(&self, ply: u32) -> bool {
+        let hash = self.board.hash();
+        self.board_stack
             .iter()
             .rev()
             .skip(1)
             .take(ply as usize)
             .any(|board| board.hash() == hash)
             || self
-                .boards
+                .board_stack
                 .iter()
                 .rev()
                 .skip(ply as usize + 1)
                 .filter(|board| board.hash() == hash)
                 .count()
                 >= 2
+    }
+
+    fn insufficient_material(&self) -> bool {
+        let rooks = self.board.pieces(Piece::Rook);
+        let queens = self.board.pieces(Piece::Queen);
+        let pawns = self.board.pieces(Piece::Pawn);
+        match self.board.occupied().len() {
+            2 => true,
+            3 => (rooks | queens | pawns).is_empty(),
+            _ => false,
+        }
     }
 }

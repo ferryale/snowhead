@@ -1,7 +1,7 @@
 use self::psqt::PsqTable;
 use self::score::{Phase, Score, Value};
-use cozy_chess::{Board, Color, File, Move, Piece, Rank, Square};
 use core::iter::zip;
+use cozy_chess::{Board, Color, File, Move, Piece, Rank, Square};
 
 pub mod psqt;
 pub mod score;
@@ -101,12 +101,10 @@ impl Evaluator {
         self.psq = self.psq_stack.pop().unwrap();
     }
 
-
     pub fn evaluate(&self, board: &Board) -> Value {
-
         let mut phase = Phase::ZERO;
         for (&pc, &ph) in zip(&Piece::ALL, &Phase::ALL) {
-            phase += ph*board.pieces(pc).len();
+            phase += ph * board.pieces(pc).len();
         }
 
         let egs = self.psq.values[1];
@@ -114,14 +112,12 @@ impl Evaluator {
 
         let value = egs + (mgs - egs) * phase / Phase::MIDGAME;
 
-        if board.side_to_move() == Color::White { 
+        if board.side_to_move() == Color::White {
             value
-        } 
-            else { 
+        } else {
             -value
         }
     }
-
 }
 
 #[cfg(test)]
