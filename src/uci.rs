@@ -1,7 +1,7 @@
 use self::command::{GoOptions, UciCommand};
 use self::option::UciOptions;
 use crate::position::Position;
-use crate::search::SearchThread;
+use crate::search::thread::SearchThread;
 use crate::timeman::TimeManager;
 use std::io;
 use std::thread;

@@ -48,22 +48,22 @@ impl Evaluator {
         }
     }
 
-    pub fn evaluate(&self, board: &Board) -> Score {
-        let mut score = Score::ZERO;
-        let mut pc: Piece;
-        let mut c: Color;
-        for sq in board.occupied() {
-            pc = board.piece_on(sq).unwrap();
-            c = board.color_on(sq).unwrap();
-            score += self.probe_psqt(c, pc, sq);
-        }
+    // pub fn evaluate(&self, board: &Board) -> Score {
+    //     let mut score = Score::ZERO;
+    //     let mut pc: Piece;
+    //     let mut c: Color;
+    //     for sq in board.occupied() {
+    //         pc = board.piece_on(sq).unwrap();
+    //         c = board.color_on(sq).unwrap();
+    //         score += self.probe_psqt(c, pc, sq);
+    //     }
 
-        if board.side_to_move() == Color::White {
-            score
-        } else {
-            -score
-        }
-    }
+    //     if board.side_to_move() == Color::White {
+    //         score
+    //     } else {
+    //         -score
+    //     }
+    // }
 
     pub fn do_move(&mut self, board: &Board, mv: Move, next_board: &Board) {
         let c = board.side_to_move();

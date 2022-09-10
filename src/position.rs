@@ -73,11 +73,11 @@ impl Position {
         self.evaluator.undo_move();
     }
 
-    pub fn evaluate(&self) -> Value {
-        self.evaluator.evaluate(&self.board).values[0]
-    }
+    // pub fn evaluate(&self) -> Value {
+    //     self.evaluator.evaluate(&self.board).values[0]
+    // }
 
-    pub fn eval(&self) -> Value {
+    pub fn evaluate(&self) -> Value {
         if self.board.side_to_move() == Color::White {
             self.psq().values[0]
         } else {

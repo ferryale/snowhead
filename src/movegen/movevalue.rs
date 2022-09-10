@@ -50,27 +50,17 @@ impl Default for MoveValue {
 }
 
 impl fmt::Display for MoveValue {
-    // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Write strictly the first element into the supplied output
-        // stream: `f`. Returns `fmt::Result` which indicates whether the
-        // operation succeeded or failed. Note that `write!` uses syntax which
-        // is very similar to `println!`.
         write!(f, "{}, {}", self.mv, self.value.0)
     }
 }
 
 impl<const N: usize> fmt::Display for MoveValues<N> {
-    // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Write strictly the first element into the supplied output
-        // stream: `f`. Returns `fmt::Result` which indicates whether the
-        // operation succeeded or failed. Note that `write!` uses syntax which
-        // is very similar to `println!`.
         for idx in 0..self.size {
-            write!(f, "{}", self.list[idx]).unwrap();
+            write!(f, "{}", self.list[idx])?;
             if idx < self.size - 1 {
-                write!(f, "\n").unwrap();
+                write!(f, "\n")?;
             }
         }
         Ok(())
@@ -97,7 +87,7 @@ impl PartialEq for MoveValue {
 
 #[derive(Debug, Clone, Copy)]
 pub struct MoveValues<const N: usize> {
-    list: [MoveValue; N],
+    pub list: [MoveValue; N],
     idx: usize,
     size: usize,
 }
@@ -114,11 +104,6 @@ impl<const N: usize> MoveValues<N> {
     pub fn push(&mut self, move_value: MoveValue) {
         self.list[self.size] = move_value;
         self.size += 1;
-    }
-
-    pub fn insert(&mut self, move_value: MoveValue) {
-        self.list[self.size] = move_value;
-        self.idx += 1;
     }
 
     pub fn push_sort(&mut self, move_value: MoveValue) {
@@ -152,7 +137,10 @@ impl<const N: usize> MoveValues<N> {
     pub fn sort(&mut self) {
         self.list[0..self.size].sort();
         self.list[0..self.size].reverse();
-        self.idx = 0;
+    }
+
+    pub fn replace_next(&mut self, move_value: MoveValue) {
+        self.list[self.idx] = move_value;
     }
 
     pub fn extend(&mut self, other: &MoveValues<N>) {
@@ -184,6 +172,10 @@ impl<const N: usize> MoveValues<N> {
         self.list
     }
 
+    pub fn list_mut(&mut self) -> [MoveValue; N] {
+        self.list
+    }
+
     pub fn size(&self) -> usize {
         self.size
     }
@@ -196,13 +188,22 @@ impl<const N: usize> MoveValues<N> {
         self.idx = idx;
     }
 
-    // pub fn incr_idx(&mut self, incr: usize) {
-    //     self.idx+= incr;
-    // }
+    pub fn set_size(&mut self, size: usize) {
+        self.size = size;
+    }
+
+    pub fn incr_idx(&mut self, incr: usize) {
+        self.idx+= incr;
+    }
 
     pub fn decr_idx(&mut self, incr: usize) {
         self.idx -= incr;
     }
+
+    pub fn incr_size(&mut self, incr: usize) {
+        self.size += incr;
+    }
+
     pub fn print(&self) {
         for idx in 0..self.size {
             print!("{}:{:?}, ", self.list[idx].mv, self.list[idx].value.0);
