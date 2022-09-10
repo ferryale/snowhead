@@ -40,8 +40,7 @@ pub fn alphabeta(
     // Iterate through the moves
     loop {
         let mv_option = if root_node && depth > 1 {
-            let tmp = thread.root_moves.next_move();
-            tmp
+            thread.root_moves.next_move()
             //mpick.next_move(pos, false)
         } else {
             mpick.next_move(pos, false)

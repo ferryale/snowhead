@@ -3,6 +3,8 @@ use crate::evaluate::Evaluator;
 use crate::uci::option::UciOptions;
 use cozy_chess::{Board, Color, Move, Piece, Rank, Square};
 
+
+
 #[derive(Debug, Clone)]
 pub struct Position {
     pub board: Board,
@@ -73,11 +75,12 @@ impl Position {
     }
 
     pub fn evaluate(&self) -> Value {
-        if self.board.side_to_move() == Color::White {
-            self.psq().values[0]
-        } else {
-            -self.psq().values[0]
-        }
+        self.evaluator.evaluate(&self.board)
+        // if self.board.side_to_move() == Color::White {
+        //     self.psq().values[0]
+        // } else {
+        //     -self.psq().values[0]
+        // }
     }
 
     pub fn psq(&self) -> Score {
@@ -126,5 +129,27 @@ impl Position {
 
     pub fn piece_on(&self, sq: Square) -> Option<Piece> {
         self.board.piece_on(sq)
+    }
+
+    pub fn count(&self, pc: Piece) -> u32 {
+        self.board.pieces(pc).len()
+    }
+
+    pub fn has_repeated(&self) {
+        let hash = self.hash();
+        self.boards
+            .iter()
+            .rev()
+            .skip(1)
+            .take(ply as usize)
+            .any(|board| board.hash() == hash)
+            || self
+                .boards
+                .iter()
+                .rev()
+                .skip(ply as usize + 1)
+                .filter(|board| board.hash() == hash)
+                .count()
+                >= 2
     }
 }

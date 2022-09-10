@@ -17,6 +17,17 @@ impl Value {
 
 impl Phase {
     pub const NUM: usize = 2;
+    pub const ZERO: Phase = Phase(0);
+    pub const ENDGAME: Phase = Phase(0);
+    pub const MIDGAME: Phase = Phase(48);
+    pub const PAWN: Phase = Phase(0);
+    pub const KNIGHT: Phase = Phase(2);
+    pub const BISHOP: Phase = Phase(2);
+    pub const ROOK: Phase = Phase(4);
+    pub const QUEEN: Phase = Phase(8);
+    pub const ALL: [Phase; 5] = [Phase::PAWN, Phase::KNIGHT, Phase::BISHOP, Phase::ROOK, Phase::QUEEN];
+
+
 }
 
 impl Score {
@@ -157,6 +168,13 @@ impl Mul<i32> for Value {
     type Output = Self;
     fn mul(self, rhs: i32) -> Self::Output {
         Value(self.0 * rhs as i16)
+    }
+}
+
+impl Mul<u32> for Phase {
+    type Output = Self;
+    fn mul(self, rhs: u32) -> Self::Output {
+        Phase(self.0 * rhs)
     }
 }
 

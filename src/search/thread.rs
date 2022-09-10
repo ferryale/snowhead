@@ -103,8 +103,8 @@ impl SearchThread {
     }
 
     pub fn search(&mut self, pos: &mut Position) {
-        let alpha = -Value(10000);
-        let beta = Value(10000);
+        let alpha = -Value(30000);
+        let beta = Value(30000);
         let mut pv = PrincipalVariation::new();
         let mut prev_nodes = 1;
         let mut start_time: SystemTime;
@@ -127,7 +127,6 @@ impl SearchThread {
             self.pv = pv;
 
             self.root_moves.sort();
-            self.root_moves.print();
 
             //self.root_moves.print();
 
