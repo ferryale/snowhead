@@ -107,7 +107,6 @@ impl GoOptions {
 
 impl Position {
     fn parse(args: Vec<&str>, uci_options: &UciOptions) -> UciCommand {
-        
         // Find the position of "moves" in args
         let moves_pos = args.iter().position(|&r| r == "moves");
 
@@ -115,13 +114,12 @@ impl Position {
             "startpos" => Position::default(&uci_options),
             "fen" => {
                 if let Some(moves_idx) = moves_pos {
-                    let fen_str = &args[1..moves_idx+1].join(" ");
+                    let fen_str = &args[1..moves_idx + 1].join(" ");
                     Position::new(&fen_str, &uci_options)
                 } else {
                     let fen_str = &args[1..].join(" ");
                     Position::new(&fen_str, &uci_options)
                 }
-                
             }
             _ => Position::default(&uci_options),
         };

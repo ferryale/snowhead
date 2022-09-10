@@ -1,6 +1,5 @@
-pub mod movevalue;
 pub mod movepick;
-
+pub mod movevalue;
 
 // #[cfg(test)]
 // mod tests{
@@ -16,7 +15,6 @@ pub mod movepick;
 //         moves_list.sort();
 //         assert_eq!(move_values.list, moves_list)
 //     }
-
 
 // }
 
@@ -35,7 +33,7 @@ pub mod movepick;
 
 // pub struct MovePicker {
 //     stage: Stage
-    
+
 // }
 
 // #[derive(Debug)]
@@ -152,7 +150,5 @@ pub mod movepick;
 //         PIECE_VALUES[pc_to as usize][0] - PIECE_VALUES[pc_to as usize][0]
 
 //     }
-    
 
 // }
-

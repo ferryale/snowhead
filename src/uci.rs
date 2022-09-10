@@ -34,8 +34,8 @@ impl Uci {
             let uci_command = UciCommand::parse(&mut uci_options)?;
 
             match uci_command {
-                UciCommand::Uci => {},
-                UciCommand::Debug => {},
+                UciCommand::Uci => {}
+                UciCommand::Debug => {}
                 UciCommand::Display => println!("{}", position.board),
                 UciCommand::IsReady => println!("readyok"),
                 UciCommand::SetOption(uci_options) => println!("{:?}", uci_options),

@@ -1,10 +1,8 @@
+use super::movevalue::{MoveValue, MoveValues};
 use crate::evaluate::psqt::PIECE_VALUES;
 use crate::evaluate::score::Value;
 use crate::position::Position;
 use cozy_chess::Move;
-use super::movevalue::{MoveValue,MoveValues};
-
-
 
 pub const MAX_MOVES: usize = 256;
 
@@ -25,7 +23,6 @@ pub enum Stage {
 impl Stage {
     pub fn new() -> Stage {
         Stage::Init
-
     }
     pub fn next(&mut self, skip_quiets: bool) {
         match self {
@@ -41,13 +38,12 @@ impl Stage {
                 } else {
                     *self = Stage::GenQuiet;
                 }
-            },
+            }
             Stage::GenQuiet => *self = Stage::Quiet,
             Stage::Quiet => *self = Stage::BadCaptures,
-            Stage::BadCaptures => {},
+            Stage::BadCaptures => {}
         };
     }
-
 }
 
 pub struct MovePicker {
@@ -56,11 +52,9 @@ pub struct MovePicker {
     //num_picked: usize,
     start_bad_captures: usize,
     start_quiet: usize,
-
 }
 
 impl MovePicker {
-
     pub fn new() -> MovePicker {
         MovePicker {
             stage: Stage::Init,
@@ -72,28 +66,28 @@ impl MovePicker {
     }
 
     pub fn next_move(&mut self, pos: &Position, skip_quiets: bool) -> Option<Move> {
-        loop { 
+        loop {
             match self.stage {
                 Stage::Init => {
                     //println!("{:?}", self.stage);
                     self.next_stage(skip_quiets);
-                },
+                }
                 Stage::PvMove => {
                     //println!("{:?}", self.stage);
                     self.next_stage(skip_quiets);
-                },
+                }
                 Stage::KillerOne => {
                     //println!("{:?}", self.stage);
                     self.next_stage(skip_quiets);
-                },
+                }
                 Stage::KillerTwo => {
                     //println!("{:?}", self.stage);
                     self.next_stage(skip_quiets);
-                },
+                }
                 Stage::CounterMove => {
                     //println!("{:?}", self.stage);
                     self.next_stage(skip_quiets);
-                },
+                }
                 Stage::GenCaptures => {
                     //println!("{:?}", self.stage);
                     self.move_values = generate_captures(&pos);
@@ -101,7 +95,7 @@ impl MovePicker {
 
                     self.start_quiet = self.move_values.size();
                     self.next_stage(skip_quiets);
-                },
+                }
                 Stage::GoodCaptures => {
                     // println!("{:?}", self.stage);
                     // println!("{}", self.move_values);
@@ -120,14 +114,14 @@ impl MovePicker {
                             }
                         }
                     };
-                },
-                
+                }
+
                 Stage::GenQuiet => {
                     self.move_values.extend(&generate_quiet(&pos));
                     self.set_current(self.start_quiet);
                     self.next_stage(skip_quiets);
-                },
-                
+                }
+
                 Stage::Quiet => {
                     match self.move_values.next() {
                         None => {
@@ -138,7 +132,7 @@ impl MovePicker {
                             return Some(move_value.chess_move());
                         }
                     };
-                },
+                }
                 Stage::BadCaptures => {
                     if self.current() >= self.start_quiet {
                         break;
@@ -149,7 +143,7 @@ impl MovePicker {
                             return Some(move_value.chess_move());
                         }
                     };
-                },
+                }
             } // match
         } // loop
 
@@ -183,7 +177,6 @@ impl MovePicker {
     pub fn stage(&self) -> Stage {
         self.stage
     }
-
 }
 
 pub fn generate_captures(pos: &Position) -> MoveValues<MAX_MOVES> {
@@ -198,7 +191,6 @@ pub fn generate_captures(pos: &Position) -> MoveValues<MAX_MOVES> {
         false
     });
     move_values
-
 }
 
 pub fn generate_quiet(pos: &Position) -> MoveValues<MAX_MOVES> {
@@ -213,7 +205,6 @@ pub fn generate_quiet(pos: &Position) -> MoveValues<MAX_MOVES> {
         false
     });
     move_values
-
 }
 
 fn score_capture(pos: &Position, mv: &Move) -> Value {
@@ -221,4 +212,3 @@ fn score_capture(pos: &Position, mv: &Move) -> Value {
     let pc_to = pos.board.piece_on(mv.to).unwrap();
     Value(PIECE_VALUES[pc_to as usize][0] - PIECE_VALUES[pc_from as usize][0])
 }
-

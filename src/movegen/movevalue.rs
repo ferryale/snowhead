@@ -1,5 +1,5 @@
-use cozy_chess::{Square, Move};
 use crate::evaluate::score::Value;
+use cozy_chess::{Move, Square};
 use std::{cmp, fmt};
 
 #[derive(Debug, Clone, Copy, Eq)]
@@ -9,10 +9,9 @@ pub struct MoveValue {
 }
 
 impl MoveValue {
-
     pub fn new(mv: Move, value: Value) -> MoveValue {
         MoveValue {
-            mv: mv, 
+            mv: mv,
             value: value,
         }
     }
@@ -23,8 +22,8 @@ impl MoveValue {
                 from: Square::A1,
                 to: Square::A1,
                 promotion: None,
-            }, 
-            value: Value(val)
+            },
+            value: Value(val),
         }
     }
 
@@ -35,7 +34,6 @@ impl MoveValue {
     pub fn value(&self) -> Value {
         self.value
     }
-
 }
 
 impl Default for MoveValue {
@@ -45,8 +43,8 @@ impl Default for MoveValue {
                 from: Square::A1,
                 to: Square::A1,
                 promotion: None,
-            }, 
-            value: Value(0)
+            },
+            value: Value(0),
         }
     }
 }
@@ -71,14 +69,13 @@ impl<const N: usize> fmt::Display for MoveValues<N> {
         // is very similar to `println!`.
         for idx in 0..self.size {
             write!(f, "{}", self.list[idx]).unwrap();
-            if idx < self.size-1 {
+            if idx < self.size - 1 {
                 write!(f, "\n").unwrap();
             }
         }
         Ok(())
     }
 }
-
 
 impl Ord for MoveValue {
     fn cmp(&self, other: &MoveValue) -> cmp::Ordering {
@@ -98,10 +95,9 @@ impl PartialEq for MoveValue {
     }
 }
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct MoveValues<const N: usize> {
-    list: [MoveValue;N],
+    list: [MoveValue; N],
     idx: usize,
     size: usize,
 }
@@ -109,9 +105,9 @@ pub struct MoveValues<const N: usize> {
 impl<const N: usize> MoveValues<N> {
     pub fn new() -> MoveValues<N> {
         MoveValues {
-            list: [MoveValue::default();N],
+            list: [MoveValue::default(); N],
             idx: 0,
-            size: 0
+            size: 0,
         }
     }
 
@@ -136,7 +132,7 @@ impl<const N: usize> MoveValues<N> {
             if move_value > self.list[j] {
                 // Shift all values down the list
                 for k in (j..self.size).rev() {
-                    self.list[k+1] = self.list[k];
+                    self.list[k + 1] = self.list[k];
                 }
                 // Insert it at position j
                 self.list[j] = move_value;
@@ -162,7 +158,7 @@ impl<const N: usize> MoveValues<N> {
     pub fn extend(&mut self, other: &MoveValues<N>) {
         let new_size = self.size + other.size();
         for j in self.size..new_size {
-            self.list[j] = other.list[j-self.size()];
+            self.list[j] = other.list[j - self.size()];
         }
         self.size = new_size;
     }
@@ -180,11 +176,11 @@ impl<const N: usize> MoveValues<N> {
     pub fn next_move(&mut self) -> Option<Move> {
         match self.next() {
             Some(move_value) => Some(move_value.chess_move()),
-            None => None
+            None => None,
         }
     }
 
-    pub fn list(&self) -> [MoveValue;N] {
+    pub fn list(&self) -> [MoveValue; N] {
         self.list
     }
 
@@ -205,7 +201,7 @@ impl<const N: usize> MoveValues<N> {
     // }
 
     pub fn decr_idx(&mut self, incr: usize) {
-        self.idx-= incr;
+        self.idx -= incr;
     }
     pub fn print(&self) {
         for idx in 0..self.size {
@@ -213,17 +209,22 @@ impl<const N: usize> MoveValues<N> {
         }
         println!("\n");
     }
-    
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::{MoveValue, MoveValues};
 
     #[test]
     fn insertion_sort_works() {
         let mut move_values = MoveValues::<5>::new();
-        let mut moves_list = [MoveValue::new_val(5), MoveValue::new_val(31), MoveValue::new_val(-3), MoveValue::new_val(22), MoveValue::new_val(-180)];
+        let mut moves_list = [
+            MoveValue::new_val(5),
+            MoveValue::new_val(31),
+            MoveValue::new_val(-3),
+            MoveValue::new_val(22),
+            MoveValue::new_val(-180),
+        ];
         for move_value in moves_list {
             move_values.push_sort(move_value);
         }
@@ -231,6 +232,4 @@ mod tests{
         moves_list.reverse();
         assert_eq!(move_values.list(), moves_list);
     }
-
-
 }

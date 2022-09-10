@@ -1,7 +1,7 @@
-use crate::evaluate::score::{Value, Score};
+use crate::evaluate::score::{Score, Value};
 use crate::evaluate::Evaluator;
 use crate::uci::option::UciOptions;
-use cozy_chess::{Color, Board, Move};
+use cozy_chess::{Board, Color, Move};
 
 #[derive(Debug, Clone)]
 pub struct Position {
@@ -83,7 +83,6 @@ impl Position {
         } else {
             -self.psq().values[0]
         }
-        
     }
 
     pub fn psq(&self) -> Score {
