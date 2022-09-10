@@ -24,7 +24,7 @@ impl Stage {
     pub fn new() -> Stage {
         Stage::Init
     }
-    pub fn next(&mut self, skip_quiets: bool) {
+    pub fn next(&mut self, is_check: bool, skip_quiets: bool) {
         match self {
             Stage::Init => *self = Stage::PvMove,
             Stage::PvMove => *self = Stage::KillerOne,
@@ -33,7 +33,7 @@ impl Stage {
             Stage::CounterMove => *self = Stage::GenCaptures,
             Stage::GenCaptures => *self = Stage::GoodCaptures,
             Stage::GoodCaptures => {
-                if skip_quiets {
+                if skip_quiets && !is_check {
                     *self = Stage::BadCaptures;
                 } else {
                     *self = Stage::GenQuiet;
@@ -70,23 +70,23 @@ impl MovePicker {
             match self.stage {
                 Stage::Init => {
                     //println!("{:?}", self.stage);
-                    self.next_stage(skip_quiets);
+                    self.next_stage(pos.is_check(), skip_quiets);
                 }
                 Stage::PvMove => {
                     //println!("{:?}", self.stage);
-                    self.next_stage(skip_quiets);
+                    self.next_stage(pos.is_check(), skip_quiets);
                 }
                 Stage::KillerOne => {
                     //println!("{:?}", self.stage);
-                    self.next_stage(skip_quiets);
+                    self.next_stage(pos.is_check(), skip_quiets);
                 }
                 Stage::KillerTwo => {
                     //println!("{:?}", self.stage);
-                    self.next_stage(skip_quiets);
+                    self.next_stage(pos.is_check(), skip_quiets);
                 }
                 Stage::CounterMove => {
                     //println!("{:?}", self.stage);
-                    self.next_stage(skip_quiets);
+                    self.next_stage(pos.is_check(), skip_quiets);
                 }
                 Stage::GenCaptures => {
                     //println!("{:?}", self.stage);
@@ -94,13 +94,13 @@ impl MovePicker {
                     // println!("{:?}", self.num_moves());
 
                     self.start_quiet = self.move_values.size();
-                    self.next_stage(skip_quiets);
+                    self.next_stage(pos.is_check(), skip_quiets);
                 }
                 Stage::GoodCaptures => {
                     // println!("{:?}", self.stage);
                     // println!("{}", self.move_values);
                     match self.move_values.next() {
-                        None => self.next_stage(skip_quiets),
+                        None => self.next_stage(pos.is_check(), skip_quiets),
                         Some(move_value) => {
                             //println!("{}", move_value);
                             if move_value.value() >= Value::ZERO {
@@ -110,7 +110,7 @@ impl MovePicker {
                                 // Decrement current since the bad capture will not be returned
                                 self.decr_current(1);
                                 self.start_bad_captures = self.current();
-                                self.next_stage(skip_quiets);
+                                self.next_stage(pos.is_check(), skip_quiets);
                             }
                         }
                     };
@@ -119,14 +119,14 @@ impl MovePicker {
                 Stage::GenQuiet => {
                     self.move_values.extend(&generate_quiet(&pos));
                     self.set_current(self.start_quiet);
-                    self.next_stage(skip_quiets);
+                    self.next_stage(pos.is_check(), skip_quiets);
                 }
 
                 Stage::Quiet => {
                     match self.move_values.next() {
                         None => {
                             self.set_current(self.start_bad_captures);
-                            self.next_stage(skip_quiets);
+                            self.next_stage(pos.is_check(), skip_quiets);
                         }
                         Some(move_value) => {
                             return Some(move_value.chess_move());
@@ -150,8 +150,8 @@ impl MovePicker {
         None
     }
 
-    fn next_stage(&mut self, skip_quiets: bool) {
-        self.stage.next(skip_quiets);
+    fn next_stage(&mut self, is_check: bool, skip_quiets: bool) {
+        self.stage.next(is_check, skip_quiets);
     }
 
     fn current(&mut self) -> usize {

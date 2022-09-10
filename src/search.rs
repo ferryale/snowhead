@@ -21,6 +21,7 @@ pub fn alphabeta(
 ) -> Value {
     let mut eval: Value;
     let mut child_pv = PrincipalVariation::new();
+    let mut num_legal = 0;
     let root_node = ply == 0;
 
     // Increment node counter
@@ -49,6 +50,8 @@ pub fn alphabeta(
             break;
         }
         let mv = mv_option.unwrap();
+        num_legal += 1;
+
         pos.do_move(mv);
         eval = -alphabeta(
             pos,
@@ -73,6 +76,16 @@ pub fn alphabeta(
         }
     }
 
+    // If there are no legal moves at this point, it is either checkmate or stalemate
+    if num_legal == 0 {
+        // Stalemate
+        if pos.board.checkers().is_empty() {
+            return Value::DRAW;
+        } else {
+            return Value::mated_in(ply as i32);
+        } 
+    }
+
     alpha
 }
 
@@ -86,6 +99,7 @@ pub fn qsearch(
     thread: &mut SearchThread,
 ) -> Value {
     let mut child_pv = PrincipalVariation::new();
+    let mut num_moves = 0;
 
     // Increment node counter
     if thread.ss.len() <= ply as usize {
@@ -106,6 +120,7 @@ pub fn qsearch(
 
     // Iterate through the moves
     while let Some(mv) = mpick.next_move(pos, true) {
+        num_moves += 1;
         pos.do_move(mv);
         eval = -qsearch(
             pos,
@@ -126,6 +141,15 @@ pub fn qsearch(
             pv.update(&mv, &child_pv);
         }
     }
+
+    /*  If there are no moves at this point and we are in check, it is checkmate, 
+        since all evasions have been generated.
+        If there are no moves and we are not in check, it is not necessarily stalemate,
+        since not all moves are generated in qsearch.
+    */
+    if num_moves == 0 && pos.is_check() {
+        return Value::mated_in(ply as i32);
+    } 
     alpha
 }
 

@@ -140,6 +140,10 @@ impl Position {
                 && (self.board.checkers().is_empty() || self.board.status() != GameStatus::Won))
     }
 
+    pub fn is_check(&self) -> bool {
+        !self.board.checkers().is_empty()
+    }
+
     fn has_repeated(&self, ply: u32) -> bool {
         let hash = self.board.hash();
         self.board_stack
