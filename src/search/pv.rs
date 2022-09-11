@@ -1,4 +1,4 @@
-use crate::movegen::movepick::MAX_MOVES;
+use crate::movegen::MAX_MOVES;
 use cozy_chess::Move;
 
 #[derive(Debug, Clone, Copy)]

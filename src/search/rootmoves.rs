@@ -1,5 +1,5 @@
-use crate::movegen::movepick::MAX_MOVES;
 use crate::movegen::movevalue::{MoveValue, MoveValues};
+use crate::movegen::MAX_MOVES;
 use cozy_chess::Move;
 
 #[derive(Debug)]
@@ -18,16 +18,12 @@ impl RootMoves {
         self.move_values.list()
     }
 
-    pub fn list_mut(&mut self) -> [MoveValue; MAX_MOVES] {
-        self.move_values.list_mut()
-    }
-
     pub fn idx(&self) -> usize {
         self.move_values.idx()
     }
 
     pub fn len(&self) -> usize {
-        self.move_values.size()
+        self.move_values.len()
     }
 
     fn incr_idx(&mut self, incr: usize) {
@@ -41,14 +37,6 @@ impl RootMoves {
     fn set_idx(&mut self, idx: usize) {
         self.move_values.set_idx(idx)
     }
-
-    // fn set_size(&mut self, size: usize) {
-    //     self.move_values.set_size(size)
-    // }
-
-    // fn incr_size(&mut self, incr: usize) {
-    //     self.move_values.incr_size(incr)
-    // }
 
     fn push(&mut self, move_value: MoveValue) {
         self.move_values.push(move_value);
@@ -80,7 +68,7 @@ impl RootMoves {
         next_move
     }
 
-    pub fn print(&self) {
-        self.move_values.print();
-    }
+    // pub fn print(&self) {
+    //     self.move_values.print();
+    // }
 }

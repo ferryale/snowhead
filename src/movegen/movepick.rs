@@ -1,11 +1,11 @@
 use super::movevalue::{MoveValue, MoveValues};
+use super::MAX_MOVES;
 use crate::evaluate::psqt::PIECE_VALUES;
 use crate::evaluate::score::Value;
 use crate::position::Position;
 use cozy_chess::Move;
 
-pub const MAX_MOVES: usize = 256;
-
+/* Enum for staged move generation */
 #[derive(Debug, Clone, Copy)]
 pub enum Stage {
     Init,
@@ -20,10 +20,14 @@ pub enum Stage {
     BadCaptures,
 }
 
+/* Stage implementation */
 impl Stage {
+    // Constructor
     pub fn new() -> Stage {
         Stage::Init
     }
+
+    // Next stage, depending on some boolean flags
     pub fn next(&mut self, is_check: bool, skip_quiets: bool) {
         match self {
             Stage::Init => *self = Stage::PvMove,
@@ -46,78 +50,83 @@ impl Stage {
     }
 }
 
+/* MovePicker struct */
 pub struct MovePicker {
     stage: Stage,
     move_values: MoveValues<MAX_MOVES>,
-    //num_picked: usize,
     start_bad_captures: usize,
     start_quiet: usize,
 }
 
+/* MovePicker implemetation */
 impl MovePicker {
+    // Constructor
     pub fn new() -> MovePicker {
         MovePicker {
             stage: Stage::Init,
             move_values: MoveValues::<MAX_MOVES>::new(),
-            //num_picked: 0,
             start_bad_captures: 0,
             start_quiet: 0,
         }
     }
 
+    // Returns the move generation current stage
+    pub fn stage(&self) -> Stage {
+        self.stage
+    }
+
+    // Implements a state machine returning next move
     pub fn next_move(&mut self, pos: &Position, skip_quiets: bool) -> Option<Move> {
         loop {
             match self.stage {
                 Stage::Init => {
-                    //println!("{:?}", self.stage);
                     self.next_stage(pos.is_check(), skip_quiets);
                 }
-                Stage::PvMove => {
-                    //println!("{:?}", self.stage);
-                    self.next_stage(pos.is_check(), skip_quiets);
-                }
-                Stage::KillerOne => {
-                    //println!("{:?}", self.stage);
-                    self.next_stage(pos.is_check(), skip_quiets);
-                }
-                Stage::KillerTwo => {
-                    //println!("{:?}", self.stage);
-                    self.next_stage(pos.is_check(), skip_quiets);
-                }
-                Stage::CounterMove => {
-                    //println!("{:?}", self.stage);
-                    self.next_stage(pos.is_check(), skip_quiets);
-                }
-                Stage::GenCaptures => {
-                    //println!("{:?}", self.stage);
-                    self.move_values = generate_captures(&pos);
-                    // println!("{:?}", self.num_moves());
 
-                    self.start_quiet = self.move_values.size();
+                Stage::PvMove => {
+                    // TODO: add Transposition Tables
                     self.next_stage(pos.is_check(), skip_quiets);
                 }
+
+                Stage::KillerOne => {
+                    // TODO: add killer moves
+                    self.next_stage(pos.is_check(), skip_quiets);
+                }
+
+                Stage::KillerTwo => {
+                    // TODO: add killer moves
+                    self.next_stage(pos.is_check(), skip_quiets);
+                }
+
+                Stage::CounterMove => {
+                    // TODO: add countermoves
+                    self.next_stage(pos.is_check(), skip_quiets);
+                }
+
+                Stage::GenCaptures => {
+                    self.move_values = super::generate_captures(&pos);
+                    self.start_quiet = self.move_values.len();
+                    self.next_stage(pos.is_check(), skip_quiets);
+                }
+
                 Stage::GoodCaptures => {
-                    // println!("{:?}", self.stage);
-                    // println!("{}", self.move_values);
                     match self.move_values.next() {
                         None => self.next_stage(pos.is_check(), skip_quiets),
                         Some(move_value) => {
-                            //println!("{}", move_value);
                             if move_value.value() >= Value::ZERO {
-                                //self.num_picked += 1;
                                 return Some(move_value.chess_move());
                             } else {
                                 // Decrement current since the bad capture will not be returned
                                 self.decr_current(1);
                                 self.start_bad_captures = self.current();
                                 self.next_stage(pos.is_check(), skip_quiets);
-                            }
-                        }
-                    };
+                            } // if-else
+                        } // Some
+                    }; // match
                 }
 
                 Stage::GenQuiet => {
-                    self.move_values.extend(&generate_quiet(&pos));
+                    self.move_values.extend(&super::generate_quiet(&pos));
                     self.set_current(self.start_quiet);
                     self.next_stage(pos.is_check(), skip_quiets);
                 }
@@ -133,6 +142,7 @@ impl MovePicker {
                         }
                     };
                 }
+
                 Stage::BadCaptures => {
                     if self.current() >= self.start_quiet {
                         break;
@@ -150,65 +160,25 @@ impl MovePicker {
         None
     }
 
+    /* Helper methods */
+
+    // Returns the next stage based on boolean flags
     fn next_stage(&mut self, is_check: bool, skip_quiets: bool) {
         self.stage.next(is_check, skip_quiets);
     }
 
+    // Returns the current index of move_values
     fn current(&mut self) -> usize {
         self.move_values.idx()
     }
 
+    // Sets the current index of move_values
     fn set_current(&mut self, idx: usize) {
         self.move_values.set_idx(idx);
     }
 
-    // fn incr_current(&mut self, idx: usize) {
-    //     self.move_values.incr_idx(idx);
-    // }
-
+    // Decrements index of move_values
     fn decr_current(&mut self, idx: usize) {
         self.move_values.decr_idx(idx);
     }
-
-    // pub fn num_moves(&self) -> usize {
-    //     self.move_values.size()
-    // }
-
-    pub fn stage(&self) -> Stage {
-        self.stage
-    }
-}
-
-pub fn generate_captures(pos: &Position) -> MoveValues<MAX_MOVES> {
-    let mut move_values = MoveValues::<MAX_MOVES>::new();
-    let mut move_value = MoveValue::default();
-    pos.board().generate_moves(|mut piece_moves| {
-        piece_moves.to &= pos.board().colors(!pos.side_to_move());
-        for mv in piece_moves {
-            move_value = MoveValue::new(mv, score_capture(pos, &mv));
-            move_values.push_sort(move_value);
-        }
-        false
-    });
-    move_values
-}
-
-pub fn generate_quiet(pos: &Position) -> MoveValues<MAX_MOVES> {
-    let mut move_values = MoveValues::<MAX_MOVES>::new();
-    let mut move_value = MoveValue::default();
-    pos.board().generate_moves(|mut piece_moves| {
-        piece_moves.to &= !pos.board().colors(!pos.side_to_move());
-        for mv in piece_moves {
-            move_value = MoveValue::new(mv, Value(0));
-            move_values.push_sort(move_value);
-        }
-        false
-    });
-    move_values
-}
-
-fn score_capture(pos: &Position, mv: &Move) -> Value {
-    let pc_from = pos.piece_on(mv.from).unwrap();
-    let pc_to = pos.piece_on(mv.to).unwrap();
-    Value(PIECE_VALUES[pc_to as usize][0] - PIECE_VALUES[pc_from as usize][0])
 }
