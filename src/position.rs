@@ -1,7 +1,6 @@
 use self::builder::PosBuilder;
 use crate::evaluate::score::{Score, Value};
 use crate::evaluate::Evaluator;
-use crate::uci::option::UciOptions;
 use cozy_chess::{Board, Color, GameStatus, Move, Piece, Rank, Square};
 
 pub mod builder;

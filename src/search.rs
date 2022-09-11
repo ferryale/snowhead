@@ -1,15 +1,15 @@
 use self::pv::PrincipalVariation;
-use self::thread::{SearchStack, SearchThread};
+use self::thread::SearchThread;
 use crate::evaluate::score::Value;
 use crate::movegen::movepick::MovePicker;
-use crate::movegen::movevalue::MoveValue;
 use crate::position::Position;
-use cozy_chess::Board;
 
+pub mod perft;
 pub mod pv;
 pub mod rootmoves;
 pub mod thread;
 
+/* Alphabeta recursive algorithm */
 pub fn alphabeta(
     pos: &mut Position,
     ply: u32,
@@ -19,20 +19,21 @@ pub fn alphabeta(
     pv: &mut PrincipalVariation,
     thread: &mut SearchThread,
 ) -> Value {
+    // Init search variables
     let mut eval: Value;
     let mut child_pv = PrincipalVariation::new();
     let mut num_legal = 0;
     let root_node = ply == 0;
 
     // Increment node counter
-    if thread.ss.len() <= ply as usize {
-        thread.ss.push(SearchStack::new());
+    if thread.ss_len() <= ply as usize {
+        thread.push_new_stack();
     }
-    thread.ss[ply as usize].node_count += 1;
+    thread.incr_node_count(ply);
 
     // Return eval for depth 0
     if depth <= 0 {
-        thread.ss[ply as usize].node_count -= 1;
+        thread.decr_node_count(ply);
         return qsearch(pos, ply, depth, alpha, beta, &mut child_pv, thread);
     }
 
@@ -57,20 +58,31 @@ pub fn alphabeta(
     // Init movepicker
     let mut mpick = MovePicker::new();
 
-    // Iterate through the moves
+    /* Iterate through the moves */
     loop {
+        /*
+            At root nodes and depth one, next move is takes from sorted root_moves.
+            In other cases, next move comes from movepicker.
+        */
         let mv_option = if root_node && depth > 1 {
-            thread.root_moves.next_move()
+            thread.next_root_move()
             //mpick.next_move(pos, false)
         } else {
             mpick.next_move(pos, false)
         };
+
+        // Break when there are no moves left
         if mv_option.is_none() {
             break;
         }
+
+        // Unwrap the move option
         let mv = mv_option.unwrap();
+
+        // Increment legal move counter
         num_legal += 1;
 
+        // Play+eval+undo
         pos.do_move(mv);
         eval = -alphabeta(
             pos,
@@ -83,24 +95,30 @@ pub fn alphabeta(
         );
         pos.undo_move();
 
+        // Fail high: return beta
         if eval >= beta {
             return beta;
         }
+
+        // New best move: update alpha and pv
         if eval > alpha {
             alpha = eval;
             pv.update(&mv, &child_pv);
         }
+
+        // At rootnodes, insert the move into the root_moves list
         if root_node {
-            thread.root_moves.insert(MoveValue::new(mv, alpha), depth);
+            thread.update_root_moves(mv, alpha, depth);
         }
-    }
+    } // loop
 
     // If there are no legal moves at this point, it is either checkmate or stalemate
     if num_legal == 0 {
-        // Stalemate
         if !pos.is_check() {
+            // Stalemate
             return Value::DRAW;
         } else {
+            // Checkmate
             return Value::mated_in(ply);
         }
     }
@@ -108,6 +126,7 @@ pub fn alphabeta(
     alpha
 }
 
+/* Quiescent search algorithm */
 pub fn qsearch(
     pos: &mut Position,
     ply: u32,
@@ -117,29 +136,38 @@ pub fn qsearch(
     pv: &mut PrincipalVariation,
     thread: &mut SearchThread,
 ) -> Value {
+    // Init search variables
     let mut child_pv = PrincipalVariation::new();
     let mut num_moves = 0;
 
     // Increment node counter
-    if thread.ss.len() <= ply as usize {
-        thread.ss.push(SearchStack::new());
+    if thread.ss_len() <= ply as usize {
+        thread.push_new_stack();
     }
-    thread.ss[ply as usize].node_count += 1;
+    thread.incr_node_count(ply);
 
     // Evaluate the position
     let mut eval = pos.evaluate();
+
+    // Fail high: return beta
     if eval >= beta {
         return beta;
     }
+
+    // New best move: update alpha
     if eval > alpha {
         alpha = eval;
     }
 
+    // Init movepicker
     let mut mpick = MovePicker::new();
 
     // Iterate through the moves
     while let Some(mv) = mpick.next_move(pos, true) {
+        // Update mve counter
         num_moves += 1;
+
+        // Play+eval+undo
         pos.do_move(mv);
         eval = -qsearch(
             pos,
@@ -152,65 +180,27 @@ pub fn qsearch(
         );
         pos.undo_move();
 
+        // Fail high: return beta
         if eval >= beta {
             return beta;
         }
+        // New best move: update alpha and pv
         if eval > alpha {
             alpha = eval;
             pv.update(&mv, &child_pv);
         }
     }
 
-    /*  If there are no moves at this point and we are in check, it is checkmate,
+    /*
+        If there are no moves at this point and we are in check, it is checkmate,
         since all evasions have been generated.
         If there are no moves and we are not in check, it is not necessarily stalemate,
         since not all moves are generated in qsearch.
     */
     if num_moves == 0 && pos.is_check() {
+        // Checkmate
         return Value::mated_in(ply);
     }
+
     alpha
-}
-
-pub fn perft(board: &Board, depth: u8) -> u64 {
-    if depth == 0 {
-        1
-    } else {
-        let mut nodes = 0;
-        board.generate_moves(|moves| {
-            for mv in moves {
-                let mut board = board.clone();
-                board.play_unchecked(mv);
-                nodes += perft(&board, depth - 1);
-            }
-            false
-        });
-        nodes
-    }
-}
-
-pub fn perft_bulk(board: &Board, depth: u8) -> u64 {
-    let mut nodes = 0;
-
-    match depth {
-        0 => nodes += 1,
-        1 => {
-            board.generate_moves(|moves| {
-                nodes += moves.len() as u64;
-                false
-            });
-        }
-        _ => {
-            board.generate_moves(|moves| {
-                for mv in moves {
-                    let mut board = board.clone();
-                    board.play_unchecked(mv);
-                    let child_nodes = perft_bulk(&board, depth - 1);
-                    nodes += child_nodes;
-                }
-                false
-            });
-        }
-    }
-    nodes
 }

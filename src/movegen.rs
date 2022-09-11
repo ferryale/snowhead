@@ -1,5 +1,4 @@
 use self::movevalue::{MoveValue, MoveValues};
-use crate::evaluate::psqt::PIECE_VALUES;
 use crate::evaluate::score::Value;
 use crate::position::Position;
 use cozy_chess::{Move, Piece};

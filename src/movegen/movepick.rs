@@ -1,6 +1,5 @@
-use super::movevalue::{MoveValue, MoveValues};
+use super::movevalue::MoveValues;
 use super::MAX_MOVES;
-use crate::evaluate::psqt::PIECE_VALUES;
 use crate::evaluate::score::Value;
 use crate::position::Position;
 use cozy_chess::Move;

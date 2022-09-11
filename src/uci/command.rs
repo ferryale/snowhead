@@ -3,7 +3,6 @@ use crate::position::Position;
 use cozy_chess::{Board, Color, File, Move, Piece, Square};
 use std::collections::HashMap;
 use std::io;
-use std::str::FromStr;
 
 // http://wbec-ridderkerk.nl/html/UCIProtocol.html
 #[derive(Debug)]
@@ -186,17 +185,17 @@ impl Position {
     Implementation from Black Marlin
     https://github.com/dsekercioglu/blackmarlin
 */
-fn convert_move_to_uci(mv: &mut Move, board: &Board, chess960: bool) {
-    if !chess960 && board.color_on(mv.from) == board.color_on(mv.to) {
-        let rights = board.castle_rights(board.side_to_move());
-        let file = if Some(mv.to.file()) == rights.short {
-            File::G
-        } else {
-            File::C
-        };
-        mv.to = Square::new(file, mv.to.rank());
-    }
-}
+// fn convert_move_to_uci(mv: &mut Move, board: &Board, chess960: bool) {
+//     if !chess960 && board.color_on(mv.from) == board.color_on(mv.to) {
+//         let rights = board.castle_rights(board.side_to_move());
+//         let file = if Some(mv.to.file()) == rights.short {
+//             File::G
+//         } else {
+//             File::C
+//         };
+//         mv.to = Square::new(file, mv.to.rank());
+//     }
+// }
 
 fn convert_move(mv: &mut Move, board: &Board, chess960: bool) {
     let convert_castle = !chess960
