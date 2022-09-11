@@ -3,13 +3,12 @@ use crate::evaluate::psqt::{PIECE_VALUES, PSQ_BONUS};
 use crate::evaluate::score::Phase;
 use cozy_chess::{File, Piece, Rank};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::io;
 
 /*
     Uci options can be converted to and read from a json file
-    thorugh serde Serialize and Deserialize.
+    via serde Serialize and Deserialize.
     This allows to pass material tables through uci for tuning with
     external optimizers.
 */
@@ -23,6 +22,18 @@ pub struct UciOptions {
 }
 
 /* Uci options implementation */
+impl Default for UciOptions {
+    fn default() -> UciOptions {
+        UciOptions {
+            hash_size: 8,
+            move_overhead: 10,
+            chess960: false,
+            psq_bonus: PSQ_BONUS,
+            piece_values: PIECE_VALUES,
+        }
+    }
+}
+
 impl UciOptions {
     pub fn new() -> UciOptions {
         UciOptions {
@@ -77,7 +88,7 @@ impl UciOptions {
             "dump" => self.dump(value)?,
             _ => println!("Invalid option '{key}'"),
         } // match
-        
+
         Ok(UciCommand::SetOption(*self))
     }
 }

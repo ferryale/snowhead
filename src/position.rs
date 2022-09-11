@@ -1,8 +1,17 @@
+use self::builder::PosBuilder;
 use crate::evaluate::score::{Score, Value};
 use crate::evaluate::Evaluator;
 use crate::uci::option::UciOptions;
 use cozy_chess::{Board, Color, GameStatus, Move, Piece, Rank, Square};
 
+pub mod builder;
+
+/*
+    Position struct.
+    The board stack is stored to undo moves by popping
+    the last board from the stack.
+    Undo info and logic not needed.
+*/
 #[derive(Debug, Clone)]
 pub struct Position {
     pub board: Board,
@@ -10,48 +19,27 @@ pub struct Position {
     pub evaluator: Evaluator,
 }
 
+impl Default for Position {
+    fn default() -> Position {
+        Position {
+            board: Board::default(),
+            board_stack: vec![],
+            evaluator: Evaluator::default(),
+        }
+    }
+}
+
 impl Position {
-    pub fn new(fen: &str, uci_options: &UciOptions) -> Position {
-        Position {
-            board: Self::from_fen(fen, uci_options.chess960),
-            board_stack: vec![],
-            evaluator: Evaluator::new(&uci_options.piece_values, &uci_options.psq_bonus),
-        }
+    /*
+        Position is created by a builder:
+        let pos = Position::new().fen(&fen).uci_options(&uci_options).build();
+    */
+    pub fn new() -> PosBuilder {
+        PosBuilder::default()
     }
 
-    pub fn default(uci_options: &UciOptions) -> Position {
-        Position {
-            board: Board::default(),
-            board_stack: vec![],
-            evaluator: Evaluator::new(&uci_options.piece_values, &uci_options.psq_bonus),
-        }
-    }
-
-    pub fn default_uci() -> Position {
-        Position {
-            board: Board::default(),
-            board_stack: vec![],
-            evaluator: Evaluator::default(),
-        }
-    }
-
-    pub fn new_uci(fen: &str) -> Position {
-        Position {
-            board: Self::from_fen(fen, false),
-            board_stack: vec![],
-            evaluator: Evaluator::default(),
-        }
-    }
-
-    pub fn set(fen: &str, chess960: bool) -> Position {
-        Position {
-            board: Self::from_fen(fen, chess960),
-            board_stack: vec![],
-            evaluator: Evaluator::default(),
-        }
-    }
-
-    fn from_fen(fen: &str, chess960: bool) -> Board {
+    // Helper method to read a board from fen: returns a Board!
+    fn board_from_fen(fen: &str, chess960: bool) -> Board {
         match Board::from_fen(fen, chess960) {
             Ok(board) => board,
             Err(e) => {
@@ -61,17 +49,20 @@ impl Position {
         }
     }
 
+    // Makes a move and incrementally updates the evaluator
     pub fn do_move(&mut self, mv: Move) {
         self.board_stack.push(self.board.clone());
         self.evaluator.do_move(&self.board, mv);
         self.board.play_unchecked(mv);
     }
 
+    // Unmakes a move by popping last move from the stack
     pub fn undo_move(&mut self) {
         self.board = self.board_stack.pop().unwrap();
         self.evaluator.undo_move();
     }
 
+    // Tries to make a null move and returns true if succeeds
     pub fn do_null_move(&mut self) -> bool {
         if let Some(new_board) = self.board.null_move() {
             self.board_stack.push(self.board.clone());
@@ -83,33 +74,34 @@ impl Position {
         }
     }
 
+    // Evaluates the position through the evaluator
     pub fn evaluate(&self) -> Value {
         self.evaluator.evaluate(&self.board)
-        // if self.board.side_to_move() == Color::White {
-        //     self.psq().values[0]
-        // } else {
-        //     -self.psq().values[0]
-        // }
     }
 
+    // Returns the psq score
     pub fn psq(&self) -> Score {
         self.evaluator.psq
     }
 
+    // Computes and returns the psq score
     pub fn eval_psq(&mut self) -> Score {
         self.evaluator.eval_psq(&self.board);
         self.psq()
     }
 
+    // Inits the psq score
     pub fn init_psq(&mut self) {
         self.evaluator.eval_psq(&self.board);
     }
 
+    // Checks if a move is castling
     pub fn is_castling(&self, mv: Move) -> bool {
         let c = self.board.side_to_move();
         self.board.colors(c).has(mv.to)
     }
 
+    // Checks if a move is enpassant
     pub fn is_enpassant(&self, mv: Move) -> bool {
         let c = self.board.side_to_move();
         let ep_square = self
@@ -119,31 +111,22 @@ impl Position {
         Some(mv.to) == ep_square
     }
 
-    pub fn captured_square(&self, mv: Move) -> Square {
-        let c = self.board.side_to_move();
-        if self.is_enpassant(mv) {
-            Square::new(mv.to.file(), Rank::Fifth.relative_to(c))
-        } else {
-            mv.to
-        }
-    }
-
-    pub fn captured_piece(&self, mv: Move) -> Option<Piece> {
-        self.board.piece_on(self.captured_square(mv))
-    }
-
+    // Returns the side to move
     pub fn side_to_move(&self) -> Color {
         self.board.side_to_move()
     }
 
+    // Returns the piece on a given square, None if square is empty.
     pub fn piece_on(&self, sq: Square) -> Option<Piece> {
         self.board.piece_on(sq)
     }
 
+    // Counts the number of pieces (both black and white) of a give type
     pub fn count(&self, pc: Piece) -> u32 {
         self.board.pieces(pc).len()
     }
 
+    // Checks if the position is drawn: 50 move rule, 3 fold repetition, insufficient material
     pub fn is_draw(&self, ply: u32) -> bool {
         self.insufficient_material()
             || self.has_repeated(ply)
@@ -151,10 +134,16 @@ impl Position {
                 && (self.board.checkers().is_empty() || self.board.status() != GameStatus::Won))
     }
 
+    // Checks is the current position is a check
     pub fn is_check(&self) -> bool {
         !self.board.checkers().is_empty()
     }
 
+    /*
+        Checks for 3fold repetition
+        Implemetation from Black Marlin:
+        https://github.com/dsekercioglu/blackmarlin
+    */
     fn has_repeated(&self, ply: u32) -> bool {
         let hash = self.board.hash();
         self.board_stack
@@ -173,6 +162,11 @@ impl Position {
                 >= 2
     }
 
+    /*
+        Checks for insufficient material
+        Implemetation from Black Marlin:
+        https://github.com/dsekercioglu/blackmarlin
+    */
     fn insufficient_material(&self) -> bool {
         let rooks = self.board.pieces(Piece::Rook);
         let queens = self.board.pieces(Piece::Queen);

@@ -138,21 +138,27 @@ impl Position {
         // Possible args: 1) startpos; 2) fen+fen_str+moves+moves_list
         let mut position = match args[0] {
             // Startpos: return default position
-            "startpos" => Position::default(&uci_options),
+            "startpos" => Position::new().uci_options(&uci_options).build(),
             // Fen
             "fen" => {
                 // If moves keyword if found, the fen string precedes "moves"
                 if let Some(moves_idx) = moves_pos {
                     let fen_str = &args[1..moves_idx + 1].join(" ");
-                    Position::new(&fen_str, &uci_options)
+                    Position::new()
+                        .fen(&fen_str)
+                        .uci_options(&uci_options)
+                        .build()
                 // If moves keyword not found, args only contains the fen string
                 } else {
                     let fen_str = &args[1..].join(" ");
-                    Position::new(&fen_str, &uci_options)
+                    Position::new()
+                        .fen(&fen_str)
+                        .uci_options(&uci_options)
+                        .build()
                 } // if-else
             } // fen
             // Any other keyword violates the uci protocol: return defaul position.
-            _ => Position::default(&uci_options),
+            _ => Position::new().uci_options(&uci_options).build(),
         }; // match
 
         // Parse the list of moves

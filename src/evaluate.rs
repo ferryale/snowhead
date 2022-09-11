@@ -158,7 +158,7 @@ mod tests {
         let contents = fs::read_to_string("./src/bench/bench.epd");
         for line in contents.expect("File 'bench.epd' not found").split("\n") {
             let epd_entry = EpdEntry::new(line);
-            let mut pos = Position::new_uci(&epd_entry.fen);
+            let mut pos = Position::new().fen(&epd_entry.fen).build();
             pos.init_psq();
 
             let mut move_list: Vec<Move> = vec![];

@@ -31,7 +31,7 @@ impl Uci {
     // Cmd line uci loop
     pub fn cmd_loop() -> io::Result<()> {
         let mut uci_options = UciOptions::new();
-        let mut position = Position::default(&uci_options);
+        let mut position = Position::new().uci_options(&uci_options).build();
 
         loop {
             let uci_command = UciCommand::parse(&mut uci_options)?;
