@@ -63,5 +63,4 @@ mod tests {
             Position::board_from_fen(&fen, uci_options.chess960)
         );
     }
-    
 }

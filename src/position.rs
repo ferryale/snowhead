@@ -91,18 +91,18 @@ impl Position {
 
     // Returns the psq score
     pub fn psq(&self) -> Score {
-        self.evaluator.psq
+        self.evaluator.psq()
     }
 
     // Computes and returns the psq score
-    pub fn eval_psq(&mut self) -> Score {
-        self.evaluator.eval_psq(&self.board);
+    pub fn compute_psq(&mut self) -> Score {
+        self.init_psq();
         self.psq()
     }
 
     // Inits the psq score
     pub fn init_psq(&mut self) {
-        self.evaluator.eval_psq(&self.board);
+        self.evaluator.compute_psq(&self.board);
     }
 
     // Checks if a move is castling
