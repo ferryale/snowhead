@@ -76,30 +76,36 @@ pub const PSQ_BONUS: [[[[i16;Phase::NUM]; File::NUM]; Rank::NUM]; Piece::NUM] =
     ]
 ];
 
+/* SquareTable: array of Scores for each Square */
 #[derive(Debug, Clone, Copy)]
 pub struct SquareTable {
     pub scores: [Score; Square::NUM],
 }
 
+/* PieceTable: array of Scores for each Piece */
 #[derive(Debug, Clone, Copy)]
 pub struct PieceTable {
     pub scores: [Score; Piece::NUM],
 }
 
+/* PsqTable: 2D array of Scores for each Piece/Square */
 #[derive(Debug, Clone, Copy)]
 pub struct PsqTable {
     pub scores: [[Score; Square::NUM]; Piece::NUM],
 }
 
+/* SquareTable implementation */
 impl SquareTable {
     pub const ZERO: SquareTable = SquareTable::default();
 
+    // Const default, no Default trait
     pub const fn default() -> SquareTable {
         SquareTable {
             scores: [Score::ZERO; Square::NUM],
         }
     }
 
+    // Init a square table via a 3D array of of i16 for each Rank, File, Phase
     pub fn new(table: &[[[i16; Phase::NUM]; File::NUM]; Rank::NUM]) -> SquareTable {
         let mut sqt = SquareTable::ZERO;
         for &f in &File::ALL {
@@ -111,6 +117,7 @@ impl SquareTable {
     }
 }
 
+/* PieceTable implementation */
 impl PieceTable {
     pub const ZERO: PieceTable = PieceTable {
         scores: [Score::ZERO; Piece::NUM],

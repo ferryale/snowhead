@@ -1,16 +1,25 @@
 use core::ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign};
 
+/* Value is the type returned by an evaluation */
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Value(pub i16);
 
+/* Phase of a game */
 #[derive(Debug, Clone, Copy)]
 pub struct Phase(pub u32);
 
+/*
+    Score is an array of values
+    corresponding to different game phases.
+    Default is two, but multiple phases can be implemented,
+    for more complex tapered evaluations.
+*/
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Score {
     pub values: [Value; Phase::NUM],
 }
 
+/* Value implementation */
 impl Value {
     pub const ZERO: Value = Value(0);
     pub const DRAW: Value = Value(0);
@@ -18,15 +27,18 @@ impl Value {
     pub const MATE: Value = Value(32000);
     pub const INFINITE: Value = Value(32001);
 
+    // Returns a mate in N-plies score
     pub fn mate_in(ply: u32) -> Value {
         Value::MATE - ply as i32
     }
 
+    // Returns a mated in N-plies value
     pub fn mated_in(ply: u32) -> Value {
         -Value::MATE + ply as i32
     }
 }
 
+/* Phase implementation */
 impl Phase {
     pub const NUM: usize = 2;
     pub const ZERO: Phase = Phase(0);
@@ -46,15 +58,18 @@ impl Phase {
     ];
 }
 
+/* Score implementation */
 impl Score {
     pub const ZERO: Score = Score::default();
 
+    // Default needs to be constant, so no Default trait
     pub const fn default() -> Score {
         Score {
             values: [Value(0); Phase::NUM],
         }
     }
 
+    // Creates a new score from array of values
     pub fn new(vals: &[i16; Phase::NUM]) -> Score {
         let mut score = Score::ZERO;
         for idx in 0..Phase::NUM {
@@ -64,6 +79,7 @@ impl Score {
     }
 }
 
+/* Macros for math operations */
 macro_rules! impl_math_ops {
     ($($type:ty, $trait:ident, $fn:ident;)*) => {$(
         impl $trait for $type {
@@ -76,6 +92,7 @@ macro_rules! impl_math_ops {
     )*};
 }
 
+/* Macros for math assign operations */
 macro_rules! impl_math_assign_ops {
     ($($type:ty, $trait:ident, $fn:ident;)*) => {$(
         impl $trait for $type {
@@ -87,7 +104,8 @@ macro_rules! impl_math_assign_ops {
     )*};
 }
 
-macro_rules! impl_vect_math_ops {
+/* Macros for vector math operations */
+macro_rules! impl_vec_math_ops {
     ($($type:ty, $trait:ident, $fn:ident;)*) => {$(
         impl $trait for $type {
             type Output = Self;
@@ -103,7 +121,8 @@ macro_rules! impl_vect_math_ops {
     )*};
 }
 
-macro_rules! impl_vect_math_assign_ops {
+/* Macros for vector math assign operations */
+macro_rules! impl_vec_math_assign_ops {
     ($($type:ty, $trait:ident, $fn:ident;)*) => {$(
         impl $trait for $type {
             #[inline(always)]
@@ -116,6 +135,7 @@ macro_rules! impl_vect_math_assign_ops {
     )*};
 }
 
+/* Implement math operations on Value, Score and Phase */
 impl_math_ops! {
     Value, Add, add;
     Value, Sub, sub;
@@ -124,7 +144,7 @@ impl_math_ops! {
 
 }
 
-impl_vect_math_ops! {
+impl_vec_math_ops! {
     Score, Add, add;
     Score, Sub, sub;
 }
@@ -136,7 +156,7 @@ impl_math_assign_ops! {
     Phase, SubAssign, sub_assign;
 }
 
-impl_vect_math_assign_ops! {
+impl_vec_math_assign_ops! {
     Score, AddAssign, add_assign;
     Score, SubAssign, sub_assign;
 }
