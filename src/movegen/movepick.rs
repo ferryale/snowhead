@@ -182,8 +182,8 @@ impl MovePicker {
 pub fn generate_captures(pos: &Position) -> MoveValues<MAX_MOVES> {
     let mut move_values = MoveValues::<MAX_MOVES>::new();
     let mut move_value = MoveValue::default();
-    pos.board.generate_moves(|mut piece_moves| {
-        piece_moves.to &= pos.board.colors(!pos.board.side_to_move());
+    pos.board().generate_moves(|mut piece_moves| {
+        piece_moves.to &= pos.board().colors(!pos.side_to_move());
         for mv in piece_moves {
             move_value = MoveValue::new(mv, score_capture(pos, &mv));
             move_values.push_sort(move_value);
@@ -196,8 +196,8 @@ pub fn generate_captures(pos: &Position) -> MoveValues<MAX_MOVES> {
 pub fn generate_quiet(pos: &Position) -> MoveValues<MAX_MOVES> {
     let mut move_values = MoveValues::<MAX_MOVES>::new();
     let mut move_value = MoveValue::default();
-    pos.board.generate_moves(|mut piece_moves| {
-        piece_moves.to &= !pos.board.colors(!pos.board.side_to_move());
+    pos.board().generate_moves(|mut piece_moves| {
+        piece_moves.to &= !pos.board().colors(!pos.side_to_move());
         for mv in piece_moves {
             move_value = MoveValue::new(mv, Value(0));
             move_values.push_sort(move_value);
@@ -208,7 +208,7 @@ pub fn generate_quiet(pos: &Position) -> MoveValues<MAX_MOVES> {
 }
 
 fn score_capture(pos: &Position, mv: &Move) -> Value {
-    let pc_from = pos.board.piece_on(mv.from).unwrap();
-    let pc_to = pos.board.piece_on(mv.to).unwrap();
+    let pc_from = pos.piece_on(mv.from).unwrap();
+    let pc_to = pos.piece_on(mv.to).unwrap();
     Value(PIECE_VALUES[pc_to as usize][0] - PIECE_VALUES[pc_from as usize][0])
 }

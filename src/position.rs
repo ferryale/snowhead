@@ -14,9 +14,9 @@ pub mod builder;
 */
 #[derive(Debug, Clone)]
 pub struct Position {
-    pub board: Board,
+    board: Board,
     board_stack: Vec<Board>,
-    pub evaluator: Evaluator,
+    evaluator: Evaluator,
 }
 
 impl Default for Position {
@@ -36,6 +36,16 @@ impl Position {
     */
     pub fn new() -> PosBuilder {
         PosBuilder::default()
+    }
+
+    // Returns a reference to internal board
+    pub fn board(&self) -> &Board {
+        &self.board
+    }
+
+    // Returns a reference to internal evaluator
+    pub fn evaluator(&self) -> &Evaluator {
+        &self.evaluator
     }
 
     // Helper method to read a board from fen: returns a Board!

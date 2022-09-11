@@ -21,7 +21,7 @@ impl Uci {
                 SystemTime::now(),
                 &go_options,
                 &uci_options,
-                pos.board.side_to_move(),
+                pos.side_to_move(),
             );
             let mut thread = SearchThread::new(go_options, time_manager);
             thread.search(&mut pos);
@@ -42,7 +42,7 @@ impl Uci {
                     println!("uciok");
                 }
                 UciCommand::Debug => {}
-                UciCommand::Display => println!("{}", position.board),
+                UciCommand::Display => println!("{}", position.board()),
                 UciCommand::IsReady => println!("readyok"),
                 UciCommand::SetOption(uci_options) => println!("{:?}", uci_options),
                 UciCommand::UciNewGame => {}

@@ -171,9 +171,9 @@ impl Position {
                 mv = mv_str.parse().unwrap();
                 // This is extra convertion is needed because cozy-chess
                 // encodes castling as king capture rook, which is not uci standard.
-                convert_move(&mut mv, &position.board, uci_options.chess960);
+                convert_move(&mut mv, position.board(), uci_options.chess960);
                 // Play the move on the board
-                position.board.play(mv);
+                position.do_move(mv);
             }
         }
 
@@ -186,7 +186,7 @@ impl Position {
     Implementation from Black Marlin
     https://github.com/dsekercioglu/blackmarlin
 */
-pub fn convert_move_to_uci(mv: &mut Move, board: &Board, chess960: bool) {
+fn convert_move_to_uci(mv: &mut Move, board: &Board, chess960: bool) {
     if !chess960 && board.color_on(mv.from) == board.color_on(mv.to) {
         let rights = board.castle_rights(board.side_to_move());
         let file = if Some(mv.to.file()) == rights.short {

@@ -98,7 +98,7 @@ pub fn alphabeta(
     // If there are no legal moves at this point, it is either checkmate or stalemate
     if num_legal == 0 {
         // Stalemate
-        if pos.board.checkers().is_empty() {
+        if !pos.is_check() {
             return Value::DRAW;
         } else {
             return Value::mated_in(ply);
