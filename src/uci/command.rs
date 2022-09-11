@@ -1,12 +1,12 @@
 use super::option::UciOptions;
 use crate::position::Position;
-use cozy_chess::{Color, Move, Square, Board, File, Piece};
+use cozy_chess::{Board, Color, File, Move, Piece, Square};
 use std::collections::HashMap;
 use std::io;
 use std::str::FromStr;
 
-#[derive(Debug)]
 // http://wbec-ridderkerk.nl/html/UCIProtocol.html
+#[derive(Debug)]
 pub enum UciCommand {
     Uci,
     Debug,
@@ -22,17 +22,24 @@ pub enum UciCommand {
     Invalid(String),
 }
 
+/* Uci command implementation */
 impl UciCommand {
+    // Parse an uci command string and return an enum result
     pub fn parse(uci_options: &mut UciOptions) -> io::Result<UciCommand> {
+        // Read a line from the command line into string cmd
         let reader = std::io::stdin();
         let mut cmd = String::new();
         reader.read_line(&mut cmd)?;
+
+        // Split the string into a vactor of tokens
         let tokens: Vec<&str> = cmd.split_whitespace().collect();
 
+        // First token is comand, other tokens are arguments
         let uci_command = if tokens.len() > 0 {
             let cmd_string = tokens[0];
             let cmd_args = tokens[1..].to_vec();
 
+            // Parse cmd_string into corresponding uci_command
             match cmd_string {
                 "uci" => UciCommand::Uci,
                 "debug" => UciCommand::Debug,
@@ -46,15 +53,16 @@ impl UciCommand {
                 "ponderhit" => UciCommand::Ponderhit,
                 "quit" => UciCommand::Quit,
                 _ => UciCommand::Invalid(String::from(cmd_string)),
-            }
+            } // match
         } else {
             UciCommand::Invalid(String::new())
-        };
+        }; // if-else
 
         Ok(uci_command)
     }
 }
 
+/* Options for go command */
 #[derive(Debug, Clone, Copy)]
 pub struct GoOptions {
     pub time: [u64; Color::NUM],
@@ -68,6 +76,7 @@ pub struct GoOptions {
     pub infinite: bool,
 }
 
+/* Go options implmentation */
 impl GoOptions {
     pub fn new() -> GoOptions {
         GoOptions {
@@ -83,6 +92,10 @@ impl GoOptions {
         }
     }
 
+    /*
+    Input: vector of string arguments for go command
+    Output: go command enum with associated go_options struct.
+    */
     fn parse(args: Vec<&str>) -> UciCommand {
         let args_map = args
             .chunks_exact(2) // chunks_exact returns an iterator of slices
@@ -105,38 +118,55 @@ impl GoOptions {
                 "movetime" => options.movetime = value.parse().unwrap(),
                 "infinite" => options.infinite = true,
                 _ => println!("Unknown option '{key}'"),
-            }
-        }
+            } // match
+        } // for
 
         UciCommand::Go(options)
     }
 }
 
+/* Position implementation */
 impl Position {
+    /*
+    Input: vector of string arguments for position command
+    Output: position command enum with associated position struct.
+    */
     fn parse(args: Vec<&str>, uci_options: &UciOptions) -> UciCommand {
         // Find the position of "moves" in args
         let moves_pos = args.iter().position(|&r| r == "moves");
 
+        // Possible args: 1) startpos; 2) fen+fen_str+moves+moves_list
         let mut position = match args[0] {
+            // Startpos: return default position
             "startpos" => Position::default(&uci_options),
+            // Fen
             "fen" => {
+                // If moves keyword if found, the fen string precedes "moves"
                 if let Some(moves_idx) = moves_pos {
                     let fen_str = &args[1..moves_idx + 1].join(" ");
                     Position::new(&fen_str, &uci_options)
+                // If moves keyword not found, args only contains the fen string
                 } else {
                     let fen_str = &args[1..].join(" ");
                     Position::new(&fen_str, &uci_options)
-                }
-            }
+                } // if-else
+            } // fen
+            // Any other keyword violates the uci protocol: return defaul position.
             _ => Position::default(&uci_options),
-        };
+        }; // match
 
+        // Parse the list of moves
         let mut mv: Move;
+        // If the "moves" keyword is found
         if let Some(moves_idx) = moves_pos {
+            // Moves list start after moves_pos
             for mv_str in &args[moves_idx + 1..] {
-                //mv = Move::from_str(mv_str).unwrap();
+                // Convert move string into Move
                 mv = mv_str.parse().unwrap();
+                // This is extra convertion is needed because cozy-chess
+                // encodes castling as king capture rook, which is not uci standard.
                 convert_move(&mut mv, &position.board, uci_options.chess960);
+                // Play the move on the board
                 position.board.play(mv);
             }
         }
@@ -145,29 +175,34 @@ impl Position {
     }
 }
 
-pub fn convert_move_to_uci(make_move: &mut Move, board: &Board, chess960: bool) {
-    if !chess960 && board.color_on(make_move.from) == board.color_on(make_move.to) {
+/*
+    Convert internal cozy-chess format to standard uci.
+    Implementation from Black Marlin
+    https://github.com/dsekercioglu/blackmarlin
+*/
+pub fn convert_move_to_uci(mv: &mut Move, board: &Board, chess960: bool) {
+    if !chess960 && board.color_on(mv.from) == board.color_on(mv.to) {
         let rights = board.castle_rights(board.side_to_move());
-        let file = if Some(make_move.to.file()) == rights.short {
+        let file = if Some(mv.to.file()) == rights.short {
             File::G
         } else {
             File::C
         };
-        make_move.to = Square::new(file, make_move.to.rank());
+        mv.to = Square::new(file, mv.to.rank());
     }
 }
 
-fn convert_move(make_move: &mut Move, board: &Board, chess960: bool) {
+fn convert_move(mv: &mut Move, board: &Board, chess960: bool) {
     let convert_castle = !chess960
-        && board.piece_on(make_move.from) == Some(Piece::King)
-        && make_move.from.file() == File::E
-        && matches!(make_move.to.file(), File::C | File::G);
+        && board.piece_on(mv.from) == Some(Piece::King)
+        && mv.from.file() == File::E
+        && matches!(mv.to.file(), File::C | File::G);
     if convert_castle {
-        let file = if make_move.to.file() == File::C {
+        let file = if mv.to.file() == File::C {
             File::A
         } else {
             File::H
         };
-        make_move.to = Square::new(file, make_move.to.rank());
+        mv.to = Square::new(file, mv.to.rank());
     }
 }

@@ -12,8 +12,10 @@ pub mod option;
 
 pub struct Uci;
 
+/* Uci implementation */
 impl Uci {
-    fn go(go_options: GoOptions, uci_options: UciOptions, mut pos: Position) {
+    // Handles go command to start search based on go_options and uci_options
+    fn go(mut pos: Position, go_options: GoOptions, uci_options: UciOptions) {
         thread::spawn(move || {
             let time_manager = TimeManager::new(
                 SystemTime::now(),
@@ -26,6 +28,7 @@ impl Uci {
         });
     }
 
+    // Cmd line uci loop
     pub fn cmd_loop() -> io::Result<()> {
         let mut uci_options = UciOptions::new();
         let mut position = Position::default(&uci_options);
@@ -42,17 +45,17 @@ impl Uci {
                 UciCommand::Display => println!("{}", position.board),
                 UciCommand::IsReady => println!("readyok"),
                 UciCommand::SetOption(uci_options) => println!("{:?}", uci_options),
-                UciCommand::UciNewGame => {},
+                UciCommand::UciNewGame => {}
                 UciCommand::Position(pos) => {
                     position = pos;
                 }
-                UciCommand::Go(go_options) => Self::go(go_options, uci_options, position.clone()),
+                UciCommand::Go(go_options) => Self::go(position.clone(), go_options, uci_options),
                 UciCommand::Stop => break,
                 UciCommand::Ponderhit => {}
                 UciCommand::Quit => break,
                 UciCommand::Invalid(invalid_cmd) => println!("Invalid command '{}'", invalid_cmd),
-            };
-        }
+            }; // match
+        } // loop
 
         Ok(())
     }

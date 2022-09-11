@@ -7,9 +7,12 @@ use std::collections::HashMap;
 use std::fs;
 use std::io;
 
-//use crate::evaluate::{Score,Phase,SqTable,PieceTable,PsqTable,Evaluator, PSQ_BONUS, PIECE_VALUES};
-// use crate::position::{Position};
-
+/*
+    Uci options can be converted to and read from a json file
+    thorugh serde Serialize and Deserialize.
+    This allows to pass material tables through uci for tuning with
+    external optimizers.
+*/
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct UciOptions {
     pub hash_size: u32,
@@ -19,6 +22,7 @@ pub struct UciOptions {
     pub piece_values: [[i16; Phase::NUM]; Piece::NUM],
 }
 
+/* Uci options implementation */
 impl UciOptions {
     pub fn new() -> UciOptions {
         UciOptions {
@@ -30,6 +34,7 @@ impl UciOptions {
         }
     }
 
+    // Creates a uci options struct from a json file input
     pub fn from_file(filename: &str) -> io::Result<UciOptions> {
         if let Ok(f) = fs::File::open(filename) {
             let options: UciOptions = serde_json::from_reader(&f)?;
@@ -40,35 +45,39 @@ impl UciOptions {
         }
     }
 
+    // Loads uci options from json file
     pub fn load(&mut self, filename: &str) -> io::Result<()> {
         *self = UciOptions::from_file(filename)?;
         Ok(())
     }
 
+    // Dumps uci options to json file
     pub fn dump(&self, filename: &str) -> io::Result<()> {
         let f = fs::File::create(filename)?;
         serde_json::to_writer(&f, &self)?;
         Ok(())
     }
 
+    // Parses uci options from a vector of strings
     pub fn parse(&mut self, args: Vec<&str>) -> io::Result<UciCommand> {
-        let args_map = args
-            .chunks_exact(2) // chunks_exact returns an iterator of slices
-            .map(|chunk| (chunk[0], chunk[1])) // map slices to tuples
-            .collect::<HashMap<_, _>>(); // collect into a hashmap
-
-        for (key, value) in args_map {
-            match key {
-                "Hash" => self.hash_size = value.parse().unwrap(),
-                "ClearHash" => {}
-                "MoveOverhead" => self.move_overhead = value.parse().unwrap(),
-                "chess960" => self.chess960 = value.parse::<bool>().unwrap(),
-                "load" => self.load(value)?,
-                "dump" => self.dump(value)?,
-                _ => println!("Invalid option '{key}'"),
-            }
+        // Option args: ["name", opt_name, "value", opt_value]
+        if args[0] != "name" || args[2] != "value" || args.len() != 4 {
+            println!("Invalid option arguments: {}", args.join(" "));
+            return Ok(UciCommand::SetOption(*self));
         }
 
+        // Assign values to valid options
+        let (key, value) = (args[1], args[3]);
+        match key {
+            "Hash" => self.hash_size = value.parse().unwrap(),
+            "ClearHash" => {}
+            "MoveOverhead" => self.move_overhead = value.parse().unwrap(),
+            "chess960" => self.chess960 = value.parse::<bool>().unwrap(),
+            "load" => self.load(value)?,
+            "dump" => self.dump(value)?,
+            _ => println!("Invalid option '{key}'"),
+        } // match
+        
         Ok(UciCommand::SetOption(*self))
     }
 }
