@@ -25,17 +25,13 @@ pub fn alphabeta(
     let mut num_legal = 0;
     let root_node = ply == 0;
 
-    // Increment node counter
-    if thread.ss_len() <= ply as usize {
-        thread.push_new_stack();
-    }
-    thread.incr_node_count(ply);
-
     // Return eval for depth 0
     if depth <= 0 {
-        thread.decr_node_count(ply);
         return qsearch(pos, ply, depth, alpha, beta, &mut child_pv, thread);
     }
+
+    // Increment node counter
+    thread.incr_node_count(ply);
 
     // Null move pruning
     let played_null = pos.do_null_move();
@@ -43,7 +39,7 @@ pub fn alphabeta(
         eval = -alphabeta(
             pos,
             ply + 1,
-            depth - 4,
+            depth - 1,
             -beta,
             -beta + 1,
             &mut child_pv,
@@ -141,9 +137,6 @@ pub fn qsearch(
     let mut num_moves = 0;
 
     // Increment node counter
-    if thread.ss_len() <= ply as usize {
-        thread.push_new_stack();
-    }
     thread.incr_node_count(ply);
 
     // Evaluate the position
@@ -164,7 +157,7 @@ pub fn qsearch(
 
     // Iterate through the moves
     while let Some(mv) = mpick.next_move(pos, true) {
-        // Update mve counter
+        // Update move counter
         num_moves += 1;
 
         // Play+eval+undo
@@ -172,7 +165,7 @@ pub fn qsearch(
         eval = -qsearch(
             pos,
             ply + 1,
-            depth - 1,
+            depth - 3,
             -beta,
             -alpha,
             &mut child_pv,

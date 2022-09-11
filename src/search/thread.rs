@@ -39,11 +39,6 @@ impl SearchStack {
     fn incr_node_count_by(&mut self, incr: u64) {
         self.node_count += incr;
     }
-
-    // Increments node count
-    fn decr_node_count_by(&mut self, incr: u64) {
-        self.node_count -= incr;
-    }
 }
 
 /* Search thread implementation */
@@ -70,32 +65,25 @@ impl SearchThread {
         self.root_moves.next_move()
     }
 
-    // Push stack inserts a new search stack into the vector
-    pub fn push_new_stack(&mut self) {
-        self.ss.push(SearchStack::new());
-    }
-
     // Increments node count at given ply
     pub fn incr_node_count(&mut self, ply: u32) {
+        if self.ss.len() <= ply as usize {
+            self.push_new_stack();
+        }
         self.ss[ply as usize].incr_node_count_by(1)
-    }
-
-    // Decrements node count at given ply
-    pub fn decr_node_count(&mut self, ply: u32) {
-        self.ss[ply as usize].decr_node_count_by(1)
-    }
-
-    // Returns the stack size
-    pub fn ss_len(&self) -> usize {
-        self.ss.len()
     }
 
     /* Helper methods */
 
-    // Resets the stack vector
-    fn init_stacks(&mut self) {
-        self.ss = vec![];
+    // Push stack inserts a new search stack into the vector
+    fn push_new_stack(&mut self) {
+        self.ss.push(SearchStack::new());
     }
+
+    // Resets the stack vector
+    // fn init_stacks(&mut self) {
+    //     self.ss = vec![];
+    // }
 
     // Returns the depth searched
     fn depth(&self) -> usize {
@@ -104,13 +92,15 @@ impl SearchThread {
 
     // Returns the seldepth searched
     fn seldepth(&self) -> usize {
-        self.ss.len()
+        // Remove depth 0: substract - 1
+        self.ss.len() - 1
     }
 
     // Returns the number of nodes searched
     fn nodes(&self) -> u64 {
         let mut cnt = 0;
-        for stack in &self.ss {
+        // Start at idx=1 to remove depth 0 nodes
+        for stack in &self.ss[1..] {
             if stack.node_count == 0 {
                 break;
             }
@@ -125,8 +115,8 @@ impl SearchThread {
     }
 
     // Returns the number of nodes per second searched
-    fn nps(&self, iter_time: Duration) -> u64 {
-        1_000_000 * self.nodes() / iter_time.as_micros() as u64
+    fn nps(&self, elapsed_time: Duration) -> u64 {
+        1_000_000 * self.nodes() / elapsed_time.as_micros() as u64
     }
 
     // Returns the search score to display to uci
@@ -197,8 +187,8 @@ impl SearchThread {
             // Get the time at the beginning of the iteration
             start_time = TimeManager::current();
 
-            // Reset the stacks
-            self.init_stacks();
+            // Reset the stacks: FIND OUT -> report total or iter node count?
+            //self.init_stacks();
 
             // Resets the position psq for incremental updates
             pos.init_psq();
@@ -212,6 +202,9 @@ impl SearchThread {
             // Sort the root moves for next iteration
             self.root_moves.sort();
 
+            // Debug
+            //println!("{:?}", self.ss);
+
             /* Time management */
 
             // Elapsed times
@@ -219,7 +212,7 @@ impl SearchThread {
             elapsed_time = self.elapsed_time();
 
             // Ratio between number of nodes of this versus previous iteration
-            node_ratio = std::cmp::min(self.nodes() / prev_nodes, 5);
+            node_ratio = std::cmp::max(self.nodes() / prev_nodes, 10);
 
             // Estimates the time for next iteration
             next_time = iter_time * node_ratio as u32;
