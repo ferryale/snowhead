@@ -5,6 +5,7 @@ use std::time::{Duration, SystemTime};
 
 pub const MAX_MOVES_TO_GO: u64 = 20;
 
+/* Time Manager */
 #[derive(Debug, Clone, Copy)]
 pub struct TimeManager {
     start_time: SystemTime,
@@ -12,7 +13,9 @@ pub struct TimeManager {
     max_time: Duration,
 }
 
+/* Time Manager implementation */
 impl TimeManager {
+    // Constructor
     pub fn new(
         start_time: SystemTime,
         go_options: &GoOptions,
@@ -28,10 +31,12 @@ impl TimeManager {
         time_manager
     }
 
+    // Init helper for constructor
     fn init(&mut self, go_options: &GoOptions, uci_options: &UciOptions, us: Color) {
         if !go_options.use_time_management() {
             return;
         }
+        // Optimal time is 9/10 if movetime, max time 100%
         if go_options.movetime > 0 {
             self.opt_time = Duration::from_millis(std::cmp::max(
                 9 * go_options.movetime / 10 - uci_options.move_overhead,
@@ -78,6 +83,7 @@ impl TimeManager {
 }
 
 impl GoOptions {
+    // Choose if time management of fixed depth are implementedss
     pub fn use_time_management(self) -> bool {
         self.mate == 0 && self.depth == 0 && self.nodes == 0 && self.perft == 0 && !self.infinite
     }
