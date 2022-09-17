@@ -20,6 +20,8 @@ pub struct SearchThread {
     time_manager: TimeManager,
     eval: Value,
     root_moves: RootMoves,
+    node_count: u64,
+    aborted: bool,
 }
 
 /* SearchStack entry */
@@ -52,6 +54,8 @@ impl SearchThread {
             time_manager: time_manager,
             eval: Value::ZERO,
             root_moves: RootMoves::new(),
+            node_count: 0,
+            aborted: false,
         }
     }
 
@@ -70,7 +74,53 @@ impl SearchThread {
         if self.ss.len() <= ply as usize {
             self.push_new_stack();
         }
-        self.ss[ply as usize].incr_node_count_by(1)
+        self.ss[ply as usize].incr_node_count_by(1);
+        if ply > 0 {
+            self.node_count += 1;
+        }
+    }
+
+    // Check if we can do another iteration
+    pub fn can_search_deeper(&self, node_ratio: u64) -> bool {
+        if !self.go_options.use_time_management() {
+            return true;
+        }
+
+        let elapsed_time = self.elapsed_time();
+
+        if elapsed_time >= self.time_manager.optimum() / 2 {
+            return false;
+        }
+
+        // // Elapsed time
+        // let iter_time = TimeManager::elapsed_since(iter_start);
+
+        // Estimates the time for next iteration
+        let next_time = elapsed_time * node_ratio as u32;
+
+        if next_time >= self.time_manager.maximum() {
+            return false;
+        }
+
+        true
+    }
+
+    // Check if we must stop searching
+    pub fn must_stop_searching(&mut self) -> bool {
+        if self.aborted {
+            return true;
+        }
+
+        self.aborted = self.go_options.use_time_management()
+            && self.nodes() % 1024 == 0
+            && self.time_manager.must_stop();
+
+        self.aborted
+    }
+
+    // Check if search was aborted
+    pub fn aborted(&self) -> bool {
+        self.aborted
     }
 
     /* Helper methods */
@@ -83,6 +133,19 @@ impl SearchThread {
     // Resets the stack vector
     // fn init_stacks(&mut self) {
     //     self.ss = vec![];
+    // }
+
+    // // Returns the number of nodes searched at given depth
+    // fn depth_nodes(&self, depth: i32) -> u64 {
+    //     if depth <= 1 {
+    //         return
+    //     }
+    //     let prev_nodes = self.ss[depth - 1 as usize]
+    // }
+
+    // // Returns the node ratio between current and previous iterations
+    // fn node_ratio(&self, prev_nodes: u64) -> u32 {
+
     // }
 
     // Returns the depth searched
@@ -98,15 +161,16 @@ impl SearchThread {
 
     // Returns the number of nodes searched
     fn nodes(&self) -> u64 {
-        let mut cnt = 0;
-        // Start at idx=1 to remove depth 0 nodes
-        for stack in &self.ss[1..] {
-            if stack.node_count == 0 {
-                break;
-            }
-            cnt += stack.node_count;
-        }
-        cnt
+        // let mut cnt = 0;
+        // // Start at idx=1 to remove depth 0 nodes
+        // for stack in &self.ss[1..] {
+        //     if stack.node_count == 0 {
+        //         break;
+        //     }
+        //     cnt += stack.node_count;
+        // }
+        // cnt
+        self.node_count
     }
 
     // Returns the time elapsed since search start
@@ -115,8 +179,8 @@ impl SearchThread {
     }
 
     // Returns the number of nodes per second searched
-    fn nps(&self, elapsed_time: Duration) -> u64 {
-        1_000_000 * self.nodes() / elapsed_time.as_micros() as u64
+    fn nps(&self) -> u64 {
+        1_000_000 * self.nodes() / self.elapsed_time().as_micros() as u64
     }
 
     // Returns the search score to display to uci
@@ -143,14 +207,14 @@ impl SearchThread {
     }
 
     // Returns the uci info as string
-    fn info(&self, elapsed_time: Duration) -> String {
+    fn info(&self) -> String {
         format!(
             "info depth {} seldepth {} time {} nodes {} nps {} score {} pv {}",
             self.depth(),
             self.seldepth(),
-            elapsed_time.as_millis(),
+            self.elapsed_time().as_millis(),
             self.nodes(),
-            self.nps(elapsed_time),
+            self.nps(),
             self.score(),
             self.pv()
         )
@@ -166,10 +230,10 @@ impl SearchThread {
         let mut depth = 1;
 
         // Declare helper variables
-        let mut start_time: SystemTime;
-        let mut iter_time: Duration;
-        let mut next_time: Duration;
-        let mut elapsed_time: Duration;
+        //let mut iter_start: SystemTime;
+        // let mut iter_time: Duration;
+        // let mut next_time: Duration;
+        // let mut elapsed_time: Duration;
         let mut node_ratio: u64;
 
         /*
@@ -185,7 +249,7 @@ impl SearchThread {
 
         while depth <= max_depth {
             // Get the time at the beginning of the iteration
-            start_time = TimeManager::current();
+            //iter_start = TimeManager::current();
 
             // Reset the stacks: FIND OUT -> report total or iter node count?
             //self.init_stacks();
@@ -195,6 +259,11 @@ impl SearchThread {
 
             // Launch alphabeta algorithm which returns the evaluation
             self.eval = alphabeta(pos, 0, depth, alpha, beta, &mut pv, self);
+
+            // If search was aborted, return result from previous iteration
+            if self.aborted() {
+                break;
+            }
 
             // Stores the pv
             self.pv = pv;
@@ -207,23 +276,16 @@ impl SearchThread {
 
             /* Time management */
 
-            // Elapsed times
-            iter_time = TimeManager::elapsed_since(start_time);
-            elapsed_time = self.elapsed_time();
-
             // Ratio between number of nodes of this versus previous iteration
             node_ratio = std::cmp::max(self.nodes() / prev_nodes, 10);
 
-            // Estimates the time for next iteration
-            next_time = iter_time * node_ratio as u32;
-
             // Display uci info
-            println!("{}", self.info(elapsed_time));
+            println!("{}", self.info());
+
+            // println!("{:?} vs {:?}", next_time + self.elapsed_time(), self.time_manager.optimum());
 
             // Stop searching if the estimated time for next iter exceeds allocated thinking time
-            if (next_time + self.elapsed_time() >= self.time_manager.optimum())
-                & self.go_options.use_time_management()
-            {
+            if !self.can_search_deeper(node_ratio) {
                 break;
             }
 

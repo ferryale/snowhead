@@ -36,25 +36,65 @@ impl TimeManager {
         if !go_options.use_time_management() {
             return;
         }
-        // Optimal time is 9/10 if movetime, max time 100%
-        if go_options.movetime > 0 {
-            self.opt_time = Duration::from_millis(std::cmp::max(
-                9 * go_options.movetime / 10 - uci_options.move_overhead,
-                0,
-            ));
-            self.max_time = Duration::from_millis(std::cmp::max(
+
+        /* Determine the time to allocate to next move */
+        //If movetime is given in go_options, take movetime
+        let movetime = if go_options.movetime > 0 {
+            Duration::from_millis(std::cmp::max(
                 go_options.movetime - uci_options.move_overhead,
                 0,
-            ));
+            ))
         } else {
+            // Else calculate it from time left and increments
             let mtg = std::cmp::max(go_options.movestogo, MAX_MOVES_TO_GO);
             let time_left = go_options.time[us as usize] + go_options.inc[us as usize] * mtg
                 - uci_options.move_overhead;
 
-            self.opt_time = Duration::from_millis(time_left / mtg);
-            self.max_time =
-                Duration::from_millis(std::cmp::max(6 / 5 * time_left / mtg, 3 / 5 * time_left));
-        }
+            Duration::from_millis(time_left / mtg)
+        };
+
+        // // Optimal time is 9/10 if movetime, max time 100%
+        // if go_options.movetime > 0 {
+        //     self.opt_time = Duration::from_millis(std::cmp::max(
+        //         9 * go_options.movetime / 10 - uci_options.move_overhead,
+        //         0,
+        //     ));
+        //     self.max_time = Duration::from_millis(std::cmp::max(
+        //         go_options.movetime - uci_options.move_overhead,
+        //         0,
+        //     ));
+        // } else {
+        //     let mtg = std::cmp::max(go_options.movestogo, MAX_MOVES_TO_GO);
+        //     let time_left = go_options.time[us as usize] + go_options.inc[us as usize] * mtg
+        //         - uci_options.move_overhead;
+
+        //     self.opt_time = Duration::from_millis(time_left / mtg);
+        //     self.max_time =
+        //         Duration::from_millis(std::cmp::max(6 / 5 * time_left / mtg, 3 / 5 * time_left));
+        // }
+
+        // // Optimal time is 9/10 if movetime, max time 100%
+        // if go_options.movetime > 0 {
+        //     self.opt_time = Duration::from_millis(std::cmp::max(
+        //         9 * go_options.movetime / 10 - uci_options.move_overhead,
+        //         0,
+        //     ));
+        //     self.max_time = Duration::from_millis(std::cmp::max(
+        //         go_options.movetime - uci_options.move_overhead,
+        //         0,
+        //     ));
+        // } else {
+        //     let mtg = std::cmp::max(go_options.movestogo, MAX_MOVES_TO_GO);
+        //     let time_left = go_options.time[us as usize] + go_options.inc[us as usize] * mtg
+        //         - uci_options.move_overhead;
+
+        //     self.opt_time = Duration::from_millis(time_left / mtg);
+        //     self.max_time =
+        //         Duration::from_millis(std::cmp::max(6 / 5 * time_left / mtg, 3 / 5 * time_left));
+        // }
+
+        self.opt_time = 9 * movetime / 10;
+        self.max_time = movetime;
     }
 
     // Returns duration
@@ -77,8 +117,19 @@ impl TimeManager {
         SystemTime::now()
     }
 
+    // Returns duration since previous time
     pub fn elapsed_since(previous_time: SystemTime) -> Duration {
         SystemTime::now().duration_since(previous_time).unwrap()
+    }
+
+    // Check if optimum search time has exceeded
+    pub fn should_stop(&self) -> bool {
+        self.elapsed() >= self.optimum()
+    }
+
+    // Check if max search time has exceeded
+    pub fn must_stop(&self) -> bool {
+        self.elapsed() >= self.maximum()
     }
 }
 

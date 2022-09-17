@@ -25,6 +25,11 @@ pub fn alphabeta(
     let mut num_legal = 0;
     let root_node = ply == 0;
 
+    // Check if the search should be stopped
+    if thread.must_stop_searching() {
+        return beta;
+    }
+
     // Return eval for depth 0
     if depth <= 0 {
         return qsearch(pos, ply, depth, alpha, beta, &mut child_pv, thread);
@@ -135,6 +140,11 @@ pub fn qsearch(
     // Init search variables
     let mut child_pv = PrincipalVariation::new();
     let mut num_moves = 0;
+
+    // Check if the search should be stopped
+    if thread.must_stop_searching() {
+        return beta;
+    }
 
     // Increment node counter
     thread.incr_node_count(ply);
