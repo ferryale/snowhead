@@ -3,7 +3,7 @@ pub struct EpdEntry {
     pub fen: String,
     acd: u32,
     acn: u32,
-    c0: String,
+    pub c0: String,
 }
 
 impl EpdEntry {
