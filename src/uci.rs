@@ -52,6 +52,9 @@ impl Uci {
                 UciCommand::Go(go_options) => Self::go(position.clone(), go_options, uci_options),
                 UciCommand::Stop => break,
                 UciCommand::Ponderhit => {}
+                UciCommand::Textel(textel_batch) => {
+                    println!("{}", textel_batch.evaluate(&uci_options))
+                }
                 UciCommand::Quit => break,
                 UciCommand::Invalid(invalid_cmd) => println!("Invalid command '{}'", invalid_cmd),
             }; // match

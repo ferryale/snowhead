@@ -5,3 +5,4 @@ perft6_test_fail.txt
 /tune
 src.tar.gz
 .gitignore
+test.epd

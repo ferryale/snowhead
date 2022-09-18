@@ -1,5 +1,6 @@
 use super::option::UciOptions;
 use crate::position::Position;
+use crate::textel::TextelBatch;
 use cozy_chess::{Board, Color, File, Move, Piece, Square};
 use std::collections::HashMap;
 use std::io;
@@ -17,6 +18,7 @@ pub enum UciCommand {
     Go(GoOptions),
     Stop,
     Ponderhit,
+    Textel(TextelBatch),
     Quit,
     Invalid(String),
 }
@@ -50,6 +52,7 @@ impl UciCommand {
                 "go" => GoOptions::parse(cmd_args),
                 "stop" => UciCommand::Stop,
                 "ponderhit" => UciCommand::Ponderhit,
+                "textel" => TextelBatch::parse(cmd_args),
                 "quit" => UciCommand::Quit,
                 _ => UciCommand::Invalid(String::from(cmd_string)),
             } // match
@@ -177,6 +180,35 @@ impl Position {
         }
 
         UciCommand::Position(position)
+    }
+}
+
+/* TextelBatch implementation */
+impl TextelBatch {
+    /*
+    Input: vector of string arguments for position command
+    Output: textel command enum with associated textel_batch struct.
+    */
+    fn parse(args: Vec<&str>) -> UciCommand {
+        let args_map = args
+            .chunks_exact(2) // chunks_exact returns an iterator of slices
+            .map(|chunk| (chunk[0], chunk[1])) // map slices to tuples
+            .collect::<HashMap<_, _>>(); // collect into a hashmap
+
+        let mut filename = "";
+        let mut k = 0.0;
+
+        for (key, value) in args_map {
+            match key {
+                "load" => filename = value,
+                "k" => k = value.parse().unwrap(),
+                _ => println!("Unknown option '{key}'"),
+            } // match
+        } // for
+
+        let textel_batch = TextelBatch::new(filename, k, true);
+
+        UciCommand::Textel(textel_batch)
     }
 }
 
