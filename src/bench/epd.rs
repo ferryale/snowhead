@@ -37,3 +37,25 @@ impl EpdEntry {
         entry
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::EpdEntry;
+    use crate::position::Position;
+    use cozy_chess::{Color, Move, Piece, Square};
+    use std::fs;
+
+    #[test]
+    fn read_epd_file() {
+        let contents = fs::read_to_string("./tuner/data/textel_batch1_10000_games_2moves_v2.epd");
+
+        for line in contents
+            .expect("File 'textel_batch1_10000_games_2moves_v2.epd' not found")
+            .split("\n")
+        {
+            let epd_entry = EpdEntry::new(line);
+            let mut pos = Position::new().fen(&epd_entry.fen).build();
+            pos.init_psq();
+        }
+    }
+}
