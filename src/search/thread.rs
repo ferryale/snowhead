@@ -7,7 +7,7 @@ use crate::position::Position;
 use crate::timeman::TimeManager;
 use crate::uci::command::GoOptions;
 use cozy_chess::Move;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 pub const MAX_PLY: u32 = 128;
 
@@ -277,7 +277,8 @@ impl SearchThread {
             /* Time management */
 
             // Ratio between number of nodes of this versus previous iteration
-            node_ratio = std::cmp::max(self.nodes() / prev_nodes, 10);
+            node_ratio = std::cmp::min(self.nodes() / prev_nodes + 1, 20);
+            //println!("{}", node_ratio);
 
             // Display uci info
             println!("{}", self.info());
