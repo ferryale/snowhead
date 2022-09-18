@@ -148,6 +148,23 @@ impl Position {
         !self.board.checkers().is_empty()
     }
 
+    // Checks is the position is quiet
+    pub fn is_quiet(&self) -> bool {
+        if self.is_check() {
+            return false;
+        }
+
+        // Check that there are no captures
+        let mut num_captures = 0;
+        self.board.generate_moves(|mut piece_moves| {
+            piece_moves.to &= self.board.colors(!self.side_to_move());
+            num_captures += piece_moves.len();
+            false
+        });
+
+        num_captures == 0
+    }
+
     /*
         Checks for 3fold repetition
         Implemetation from Black Marlin:
